@@ -1,800 +1,273 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LOOPER</title><style>
-
-/* ── RESET & BASE ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-–bg:       #0e0e0e;
-–bg2:      #161616;
-–bg3:      #1e1e1e;
-–border:   #2a2a2a;
-–text:     #e8e8e8;
-–text-dim: #666;
-–accent:   #e8453c;
-–accent2:  #ff8c42;
-–green:    #3cdc78;
-–radius:   6px;
-}
-
-html, body {
-height: 100%;
-background: var(–bg);
-color: var(–text);
-font-family: ‘SF Mono’, ‘Fira Code’, ‘Consolas’, monospace;
--webkit-font-smoothing: antialiased;
-}
-
-/* ── APP LAYOUT ── */
-.app {
-max-width: 480px;
-margin: 0 auto;
-padding: 24px 20px 40px;
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-gap: 28px;
-}
-
-/* ── HEADER ── */
-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-}
-
-.logo {
-font-size: 22px;
-font-weight: 700;
-letter-spacing: 0.25em;
-color: var(–text);
-}
-
-.status-bar {
-display: flex;
-align-items: center;
-gap: 8px;
-font-size: 11px;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-color: var(–text-dim);
-}
-
-.status-dot {
-width: 8px;
-height: 8px;
-border-radius: 50%;
-background: var(–text-dim);
-transition: background 0.2s;
-}
-
-.status-dot.recording {
-background: var(–accent);
-animation: pulse-dot 0.8s ease-in-out infinite alternate;
-}
-
-.status-dot.playing {
-background: var(–green);
-}
-
-@keyframes pulse-dot {
-from { opacity: 1; transform: scale(1); }
-to   { opacity: 0.5; transform: scale(0.7); }
-}
-
-/* ── CYCLE DISPLAY ── */
-.cycle-display {
-position: relative;
-width: 200px;
-height: 200px;
-margin: 0 auto;
-}
-
-.ring {
-width: 100%;
-height: 100%;
-transform: rotate(-90deg);
-}
-
-.ring-bg {
-fill: none;
-stroke: var(–bg3);
-stroke-width: 6;
-}
-
-.ring-progress {
-fill: none;
-stroke: var(–green);
-stroke-width: 6;
-stroke-linecap: round;
-stroke-dasharray: 553; /* 2π × 88 */
-stroke-dashoffset: 553;
-transition: stroke 0.3s;
-}
-
-.ring-progress.recording {
-stroke: var(–accent);
-}
-
-.cycle-inner {
-position: absolute;
-inset: 0;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-gap: 4px;
-}
-
-.cycle-time {
-font-size: 32px;
-font-weight: 700;
-letter-spacing: -0.02em;
-color: var(–text);
-font-variant-numeric: tabular-nums;
-}
-
-.cycle-label {
-font-size: 10px;
-letter-spacing: 0.15em;
-text-transform: uppercase;
-color: var(–text-dim);
-}
-
-/* ── CONTROLS ── */
-.controls {
-display: flex;
-gap: 12px;
-justify-content: center;
-}
-
-.btn {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 6px;
-padding: 16px 20px;
-border: 1px solid var(–border);
-border-radius: var(–radius);
-background: var(–bg2);
-color: var(–text-dim);
-cursor: pointer;
-transition: all 0.15s;
-min-width: 90px;
-font-family: inherit;
-}
-
-.btn:disabled {
-opacity: 0.3;
-cursor: not-allowed;
-}
-
-.btn:not(:disabled):hover {
-border-color: #444;
-background: var(–bg3);
-color: var(–text);
-}
-
-.btn:not(:disabled):active {
-transform: scale(0.96);
-}
-
-.btn-icon {
-font-size: 20px;
-line-height: 1;
-}
-
-.btn-label {
-font-size: 9px;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-}
-
-/* Record button states */
-.btn-record {
-border-color: rgba(232, 69, 60, 0.3);
-color: var(–accent);
-}
-.btn-record:not(:disabled):hover {
-border-color: var(–accent);
-background: rgba(232, 69, 60, 0.08);
-color: var(–accent);
-}
-.btn-record.active {
-background: rgba(232, 69, 60, 0.15);
-border-color: var(–accent);
-color: var(–accent);
-animation: pulse-btn 1s ease-in-out infinite alternate;
-}
-
-@keyframes pulse-btn {
-from { box-shadow: 0 0 0 0 rgba(232, 69, 60, 0.3); }
-to   { box-shadow: 0 0 0 8px rgba(232, 69, 60, 0); }
-}
-
-/* Layer button */
-.btn-layer {
-border-color: rgba(255, 140, 66, 0.3);
-color: var(–accent2);
-}
-.btn-layer:not(:disabled):hover {
-border-color: var(–accent2);
-background: rgba(255, 140, 66, 0.08);
-color: var(–accent2);
-}
-.btn-layer.active {
-background: rgba(255, 140, 66, 0.15);
-border-color: var(–accent2);
-color: var(–accent2);
-animation: pulse-btn-orange 1s ease-in-out infinite alternate;
-}
-
-@keyframes pulse-btn-orange {
-from { box-shadow: 0 0 0 0 rgba(255, 140, 66, 0.3); }
-to   { box-shadow: 0 0 0 8px rgba(255, 140, 66, 0); }
-}
-
-/* Stop button */
-.btn-stop:not(:disabled) {
-color: var(–text);
-}
-
-/* ── SECONDARY CONTROLS ── */
-.controls-secondary {
-display: flex;
-gap: 10px;
-justify-content: center;
-}
-
-.btn-sm {
-padding: 7px 18px;
-border: 1px solid var(–border);
-border-radius: var(–radius);
-background: transparent;
-color: var(–text-dim);
-font-family: inherit;
-font-size: 10px;
-letter-spacing: 0.1em;
-text-transform: uppercase;
-cursor: pointer;
-transition: all 0.15s;
-}
-
-.btn-sm:disabled {
-opacity: 0.25;
-cursor: not-allowed;
-}
-
-.btn-sm:not(:disabled):hover {
-border-color: #444;
-color: var(–text);
-}
-
-.btn-sm.btn-clear:not(:disabled):hover {
-border-color: var(–accent);
-color: var(–accent);
-}
-
-/* ── TRACKS ── */
-.tracks {
-flex: 1;
-display: flex;
-flex-direction: column;
-gap: 8px;
-}
-
-.tracks-empty {
-font-size: 11px;
-letter-spacing: 0.08em;
-color: var(–text-dim);
-text-align: center;
-padding: 32px 0;
-text-transform: uppercase;
-}
-
-/* Individual track */
-.track {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 12px 14px;
-background: var(–bg2);
-border: 1px solid var(–border);
-border-radius: var(–radius);
-transition: border-color 0.2s;
-}
-
-.track.muted {
-opacity: 0.4;
-}
-
-.track-num {
-font-size: 11px;
-letter-spacing: 0.1em;
-color: var(–text-dim);
-min-width: 20px;
-text-align: right;
-}
-
-/* Track waveform mini-visualizer */
-.track-wave {
-flex: 1;
-height: 28px;
-position: relative;
-overflow: hidden;
-}
-
-.track-wave canvas {
-width: 100%;
-height: 100%;
-display: block;
-}
-
-/* Track playhead */
-.track-playhead {
-position: absolute;
-top: 0;
-bottom: 0;
-width: 1px;
-background: var(–green);
-opacity: 0.7;
-pointer-events: none;
-}
-
-.track.muted .track-playhead {
-display: none;
-}
-
-.track-label {
-font-size: 9px;
-letter-spacing: 0.1em;
-color: var(–text-dim);
-text-transform: uppercase;
-min-width: 32px;
-text-align: center;
-}
-
-.track-actions {
-display: flex;
-gap: 6px;
-}
-
-.track-btn {
-padding: 4px 8px;
-border: 1px solid var(–border);
-border-radius: 3px;
-background: transparent;
-color: var(–text-dim);
-font-family: inherit;
-font-size: 9px;
-letter-spacing: 0.08em;
-text-transform: uppercase;
-cursor: pointer;
-transition: all 0.12s;
-}
-
-.track-btn:hover {
-border-color: #444;
-color: var(–text);
-}
-
-.track-btn.mute-btn.active {
-background: rgba(232, 69, 60, 0.15);
-border-color: var(–accent);
-color: var(–accent);
-}
-
-.track-btn.del-btn:hover {
-border-color: var(–accent);
-color: var(–accent);
-}
-
-/* ── RECORDING INDICATOR ── */
-.rec-indicator {
-display: none;
-align-items: center;
-justify-content: center;
-gap: 8px;
-font-size: 10px;
-letter-spacing: 0.15em;
-text-transform: uppercase;
-color: var(–accent);
-padding: 6px 0;
-}
-
-.rec-indicator.visible {
-display: flex;
-}
-
-.rec-dot {
-width: 6px;
-height: 6px;
-border-radius: 50%;
-background: var(–accent);
-animation: pulse-dot 0.6s ease-in-out infinite alternate;
-}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(–border); border-radius: 2px; }
-</style></head><body><div class="app"><header><div class="logo">LOOPER</div><div class="status-bar"><span class="status-dot" id="statusDot"></span><span class="status-text" id="statusText">ready</span></div></header><div class="cycle-display"><svg class="ring" viewBox="0 0 200 200"><circle class="ring-bg" cx="100" cy="100" r="88"/><circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="88"/></svg><div class="cycle-inner"><div class="cycle-time" id="cycleTime">–</div><div class="cycle-label" id="cycleLabel">no loop</div></div></div><div class="controls"><button class="btn btn-record" id="btnRecord"><span class="btn-icon">⏺</span><span class="btn-label">record</span></button><button class="btn btn-layer" id="btnLayer" disabled><span class="btn-icon">+</span><span class="btn-label">add layer</span></button><button class="btn btn-stop" id="btnStop" disabled><span class="btn-icon">⏹</span><span class="btn-label">stop</span></button></div><div class="controls-secondary"><button class="btn-sm" id="btnUndo" disabled>undo</button><button class="btn-sm btn-clear" id="btnClear" disabled>clear all</button></div><div class="tracks" id="tracksList"><div class="tracks-empty" id="tracksEmpty">no layers yet — hit record to start</div></div></div><script>
-// ═══════════════════════════════════════════════════════════
-//  LOOPER — Web Audio API Loop Station
-// ═══════════════════════════════════════════════════════════
-
-const RING_CIRCUMFERENCE = 2 * Math.PI * 88;
-
-// ── DOM ────────────────────────────────────────────────────
-const btnRecord    = document.getElementById(‘btnRecord’);
-const btnLayer     = document.getElementById(‘btnLayer’);
-const btnStop      = document.getElementById(‘btnStop’);
-const btnUndo      = document.getElementById(‘btnUndo’);
-const btnClear     = document.getElementById(‘btnClear’);
-const statusDot    = document.getElementById(‘statusDot’);
-const statusText   = document.getElementById(‘statusText’);
-const cycleTime    = document.getElementById(‘cycleTime’);
-const cycleLabel   = document.getElementById(‘cycleLabel’);
-const ringProgress = document.getElementById(‘ringProgress’);
-const tracksList   = document.getElementById(‘tracksList’);
-const tracksEmpty  = document.getElementById(‘tracksEmpty’);
-
-// ── STATE ──────────────────────────────────────────────────
-let audioCtx      = null;
-let micStream     = null;
-let mediaRecorder = null;
-let recChunks     = [];
-let recType       = null;   // ‘first’ | ‘layer’
-let isRecording   = false;
-
-let loopDuration  = 0;
-let loopStartTime = 0;      // audioCtx.currentTime when cycle began
-let tracks        = [];     // { id, buffer, gainNode, sources, muted, num }
-let rafId         = null;
-let autoStopTimer = null;
-
-// ── INIT AUDIO ─────────────────────────────────────────────
-async function initAudio() {
-if (audioCtx) return true;
-
-try {
-audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-} catch (e) {
-alert(‘Web Audio API not supported in this browser.’);
-return false;
-}
-
-try {
-micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-} catch (e) {
-alert(‘Could not access microphone.\n\nMake sure:\n• The page is served over HTTPS or localhost\n• You allow mic access when prompted’);
-audioCtx.close();
-audioCtx = null;
-return false;
-}
-
-return true;
-}
-
-// ── RECORDING ──────────────────────────────────────────────
-async function startRecording(type) {
-const ok = await initAudio();
-if (!ok) return;
-
-if (audioCtx.state === ‘suspended’) await audioCtx.resume();
-
-recType    = type;
-recChunks  = [];
-isRecording = true;
-
-// Pick best supported format
-const mime = [‘audio/webm;codecs=opus’,‘audio/webm’,‘audio/ogg’,‘audio/mp4’]
-.find(t => MediaRecorder.isTypeSupported(t)) || ‘’;
-
-try {
-mediaRecorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : {});
-} catch (e) {
-mediaRecorder = new MediaRecorder(micStream);
-}
-
-mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
-mediaRecorder.onstop = finishRecording;
-mediaRecorder.onerror = e => { console.error(‘MediaRecorder error’, e); };
-
-mediaRecorder.start(50);
-
-// Auto-stop layer at end of current cycle
-if (type === ‘layer’ && loopDuration > 0) {
-const elapsed   = (audioCtx.currentTime - loopStartTime) % loopDuration;
-const remaining = (loopDuration - elapsed) * 1000;
-autoStopTimer = setTimeout(stopRecording, remaining);
-}
-
-updateUI();
-}
-
-function stopRecording() {
-clearTimeout(autoStopTimer);
-if (!mediaRecorder || mediaRecorder.state === ‘inactive’) return;
-mediaRecorder.stop();
-isRecording = false;
-updateUI();
-}
-
-async function finishRecording() {
-if (recChunks.length === 0) { updateUI(); return; }
-
-const blob        = new Blob(recChunks, { type: recChunks[0].type || ‘audio/webm’ });
-const arrayBuffer = await blob.arrayBuffer();
-
-let audioBuffer;
-try {
-audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-} catch (e) {
-console.error(‘Decode error’, e);
-setStatus(‘decode error — try again’, false);
-updateUI();
-return;
-}
-
-if (recType === ‘first’) {
-// First recording sets the master loop duration
-loopDuration  = audioBuffer.duration;
-loopStartTime = audioCtx.currentTime;
-createTrack(audioBuffer);
-scheduleAllTracks();
-startRingAnim();
-} else {
-// Fit to loop duration (pad or trim)
-const fitted = fitBuffer(audioBuffer);
-createTrack(fitted);
-// Find next loop boundary and schedule from there
-scheduleTrack(tracks[tracks.length - 1]);
-}
-
-updateUI();
-}
-
-// Pad / trim buffer to exactly loopDuration
-function fitBuffer(buf) {
-const targetSamples = Math.round(loopDuration * audioCtx.sampleRate);
-const out = audioCtx.createBuffer(buf.numberOfChannels, targetSamples, audioCtx.sampleRate);
-for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-const src = buf.getChannelData(ch);
-const dst = out.getChannelData(ch);
-dst.set(src.subarray(0, Math.min(src.length, targetSamples)));
-}
-return out;
-}
-
-// ── TRACKS ─────────────────────────────────────────────────
-function createTrack(buffer) {
-const gainNode = audioCtx.createGain();
-gainNode.connect(audioCtx.destination);
-
-const track = {
-id:       Date.now(),
-buffer,
-gainNode,
-sources:  [],
-muted:    false,
-num:      tracks.length + 1,
-};
-tracks.push(track);
-renderTrack(track);
-return track;
-}
-
-// Schedule a track to loop in sync with the global clock
-function scheduleTrack(track) {
-stopSources(track);
-if (track.muted) return;
-
-const now     = audioCtx.currentTime;
-// How far into the current cycle are we?
-const elapsed = (now - loopStartTime) % loopDuration;
-// Start the buffer at ‘elapsed’ so it’s in sync
-playLooping(track, now, elapsed);
-}
-
-function scheduleAllTracks() {
-tracks.forEach(t => scheduleTrack(t));
-}
-
-// Start one iteration of the loop; schedule the next on ended
-function playLooping(track, when, offset) {
-const src = audioCtx.createBufferSource();
-src.buffer = track.buffer;
-src.connect(track.gainNode);
-
-const duration  = track.buffer.duration;
-const remaining = duration - offset;
-
-// Tiny fade to avoid clicks at loop boundaries
-const fade = Math.min(0.005, remaining * 0.01);
-track.gainNode.gain.cancelScheduledValues(when);
-track.gainNode.gain.setValueAtTime(0, when);
-track.gainNode.gain.linearRampToValueAtTime(1, when + fade);
-
-src.start(when, offset);
-
-// When this iteration ends, schedule the next one
-src.onended = () => {
-if (!tracks.find(t => t.id === track.id)) return; // deleted
-if (track.muted) return;
-const nextWhen = when + remaining;
-playLooping(track, nextWhen, 0);
-};
-
-track.sources.push(src);
-}
-
-function stopSources(track) {
-track.sources.forEach(s => {
-try { s.onended = null; s.stop(); } catch (e) {}
-});
-track.sources = [];
-}
-
-function muteToggle(id) {
-const t = tracks.find(t => t.id === id);
-if (!t) return;
-t.muted = !t.muted;
-if (t.muted) {
-t.gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.02);
-setTimeout(() => stopSources(t), 30);
-} else {
-scheduleTrack(t);
-}
-const el = document.querySelector(`[data-id="${id}"]`);
-if (el) {
-el.classList.toggle(‘muted’, t.muted);
-const btn = el.querySelector(’.mute-btn’);
-if (btn) { btn.textContent = t.muted ? ‘unmute’ : ‘mute’; btn.classList.toggle(‘active’, t.muted); }
-}
-}
-
-function deleteTrack(id) {
-const t = tracks.find(t => t.id === id);
-if (!t) return;
-stopSources(t);
-t.gainNode.disconnect();
-tracks = tracks.filter(x => x.id !== id);
-document.querySelector(`[data-id="${id}"]`)?.remove();
-tracks.forEach((t, i) => {
-t.num = i + 1;
-const n = document.querySelector(`[data-id="${t.id}"] .track-num`);
-if (n) n.textContent = String(t.num).padStart(2, ‘0’);
-});
-updateUI();
-}
-
-function undoLast() {
-if (!tracks.length) return;
-const last = tracks[tracks.length - 1];
-deleteTrack(last.id);
-if (!tracks.length) clearAll();
-}
-
-function clearAll() {
-tracks.forEach(t => { stopSources(t); t.gainNode.disconnect(); });
-tracks = [];
-loopDuration  = 0;
-loopStartTime = 0;
-cancelAnimationFrame(rafId);
-tracksList.innerHTML = ‘’;
-tracksList.appendChild(tracksEmpty);
-ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE;
-cycleTime.textContent  = ‘–’;
-cycleLabel.textContent = ‘no loop’;
-updateUI();
-}
-
-// ── RENDER TRACK ───────────────────────────────────────────
-function renderTrack(track) {
-tracksEmpty.remove?.();
-if (tracksEmpty.parentNode) tracksEmpty.parentNode.removeChild(tracksEmpty);
-
-const el = document.createElement(‘div’);
-el.className  = ‘track’;
-el.dataset.id = track.id;
-el.innerHTML  = ` <div class="track-num">${String(track.num).padStart(2,'0')}</div> <div class="track-wave"><canvas></canvas><div class="track-playhead"></div></div> <div class="track-label">layer</div> <div class="track-actions"> <button class="track-btn mute-btn">mute</button> <button class="track-btn del-btn">del</button> </div>`;
-
-drawWaveform(el.querySelector(‘canvas’), track.buffer);
-el.querySelector(’.mute-btn’).onclick = () => muteToggle(track.id);
-el.querySelector(’.del-btn’).onclick  = () => deleteTrack(track.id);
-tracksList.appendChild(el);
-
-requestAnimationFrame(() => {
-el.style.cssText += ‘transition:opacity .25s,transform .25s;opacity:1;transform:translateY(0)’;
-});
-el.style.cssText = ‘opacity:0;transform:translateY(8px)’;
-}
-
-function drawWaveform(canvas, buffer) {
-const W = 200, H = 28;
-canvas.width  = W * devicePixelRatio;
-canvas.height = H * devicePixelRatio;
-canvas.style.width  = W + ‘px’;
-canvas.style.height = H + ‘px’;
-const ctx = canvas.getContext(‘2d’);
-ctx.scale(devicePixelRatio, devicePixelRatio);
-
-const data = buffer.getChannelData(0);
-const step = Math.max(1, Math.floor(data.length / W));
-const mid  = H / 2;
-ctx.strokeStyle = ‘rgba(60,220,120,0.65)’;
-ctx.lineWidth   = 1;
-ctx.beginPath();
-for (let x = 0; x < W; x++) {
-let mn = 1, mx = -1;
-for (let j = 0; j < step; j++) { const v = data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
-ctx.moveTo(x, mid + mn * mid * 0.85);
-ctx.lineTo(x, mid + mx * mid * 0.85);
-}
-ctx.stroke();
-}
-
-// ── RING ANIMATION ─────────────────────────────────────────
-function startRingAnim() {
-cancelAnimationFrame(rafId);
-animRing();
-}
-
-function animRing() {
-if (!audioCtx || loopDuration === 0) return;
-const elapsed   = (audioCtx.currentTime - loopStartTime) % loopDuration;
-const progress  = elapsed / loopDuration;
-ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - progress);
-cycleTime.textContent = (loopDuration - elapsed).toFixed(1) + ‘s’;
-
-document.querySelectorAll(’.track-playhead’).forEach(ph => {
-ph.style.left = (progress * 100) + ‘%’;
-});
-
-rafId = requestAnimationFrame(animRing);
-}
-
-// ── UI STATE ───────────────────────────────────────────────
-function setStatus(text, active) {
-statusText.textContent = text;
-}
-
-function updateUI() {
-const hasLoop = loopDuration > 0;
-const isRec   = isRecording;
-
-btnRecord.disabled = isRec;
-btnRecord.classList.toggle(‘active’, isRec && recType === ‘first’);
-btnLayer.disabled  = !hasLoop || isRec;
-btnLayer.classList.toggle(‘active’, isRec && recType === ‘layer’);
-btnStop.disabled   = !isRec;
-btnUndo.disabled   = tracks.length === 0 || isRec;
-btnClear.disabled  = tracks.length === 0 || isRec;
-
-if (isRec) {
-statusDot.className    = ‘status-dot recording’;
-statusText.textContent = recType === ‘first’ ? ‘recording loop…’ : ‘recording layer…’;
-ringProgress.classList.add(‘recording’);
-} else if (hasLoop) {
-statusDot.className    = ‘status-dot playing’;
-statusText.textContent = `playing · ${tracks.length} layer${tracks.length !== 1 ? 's' : ''}`;
-ringProgress.classList.remove(‘recording’);
-cycleLabel.textContent = loopDuration.toFixed(2) + ‘s loop’;
-} else {
-statusDot.className    = ‘status-dot’;
-statusText.textContent = ‘ready’;
-}
-}
-
-// ── BUTTON WIRING ──────────────────────────────────────────
-btnRecord.onclick = () => startRecording(‘first’);
-btnLayer.onclick  = () => startRecording(‘layer’);
-btnStop.onclick   = stopRecording;
-btnUndo.onclick   = undoLast;
-btnClear.onclick  = clearAll;
-
-// ── INIT ───────────────────────────────────────────────────
-ringProgress.style.strokeDasharray  = RING_CIRCUMFERENCE;
-ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE;
-updateUI();
-</script></body></html>
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOOPER</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0e0e0e;color:#e8e8e8;font-family:'SF Mono',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;padding:24px}
+h1{font-size:20px;letter-spacing:.3em;font-weight:700}
+#status{font-size:12px;letter-spacing:.1em;color:#666;text-transform:uppercase;height:16px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+button{padding:14px 24px;border:1px solid #333;border-radius:6px;background:#161616;color:#e8e8e8;font-family:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;min-width:110px}
+button:hover:not(:disabled){border-color:#555;background:#1e1e1e}
+button:disabled{opacity:.3;cursor:not-allowed}
+button:active:not(:disabled){transform:scale(.96)}
+#btnRecord{border-color:rgba(232,69,60,.4);color:#e8453c}
+#btnRecord:hover:not(:disabled){border-color:#e8453c;background:rgba(232,69,60,.1)}
+#btnRecord.rec{animation:blink 1s infinite alternate;background:rgba(232,69,60,.15);border-color:#e8453c}
+#btnLayer{border-color:rgba(255,140,66,.4);color:#ff8c42}
+#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.1)}
+#btnLayer.rec{animation:blink 1s infinite alternate;background:rgba(255,140,66,.15);border-color:#ff8c42}
+@keyframes blink{from{opacity:1}to{opacity:.5}}
+.ring-wrap{position:relative;width:160px;height:160px}
+svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#1e1e1e;stroke-width:6}
+.ring-fg{fill:none;stroke:#3cdc78;stroke-width:6;stroke-linecap:round;stroke-dasharray:440;stroke-dashoffset:440;transition:stroke .3s}
+.ring-fg.rec{stroke:#e8453c}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.ring-time{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.ring-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#555}
+#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px}
+.track{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#161616;border:1px solid #2a2a2a;border-radius:6px}
+.tnum{font-size:11px;color:#555;min-width:22px}
+.tbar{flex:1;height:24px;background:#0e0e0e;border-radius:3px;position:relative;overflow:hidden}
+.tbar canvas{width:100%;height:100%;display:block}
+.tph{position:absolute;top:0;bottom:0;width:1px;background:#3cdc78;opacity:.7}
+.tbtn{padding:4px 10px;border:1px solid #2a2a2a;border-radius:3px;background:transparent;color:#666;font-family:inherit;font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .12s}
+.tbtn:hover{border-color:#444;color:#e8e8e8}
+.tbtn.muted{border-color:#e8453c;color:#e8453c}
+.empty{font-size:11px;letter-spacing:.08em;color:#444;text-transform:uppercase;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<h1>LOOPER</h1>
+<div id="status">ready</div>
+
+<div class="ring-wrap">
+  <svg viewBox="0 0 140 140">
+    <circle class="ring-bg" cx="70" cy="70" r="60"/>
+    <circle class="ring-fg" id="ringFg" cx="70" cy="70" r="60"/>
+  </svg>
+  <div class="ring-center">
+    <div class="ring-time" id="ringTime">--</div>
+    <div class="ring-lbl" id="ringLbl">no loop</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btnRecord">⏺ record</button>
+  <button id="btnLayer" disabled>+ layer</button>
+  <button id="btnStop" disabled>⏹ stop</button>
+</div>
+<div class="controls">
+  <button id="btnUndo" disabled>↩ undo</button>
+  <button id="btnClear" disabled>✕ clear</button>
+</div>
+
+<div id="tracks"><div class="empty" id="emptyMsg">no layers yet</div></div>
+
+<script>
+// ── constants
+const CIRC = 2 * Math.PI * 60; // 376.99
+
+// ── state
+let ctx, stream, recorder, chunks=[], recType=null, recording=false;
+let loopDur=0, loopStart=0;
+let tracks=[], raf=null, autoStop=null;
+
+// ── dom
+const $ = id => document.getElementById(id);
+const btnRec=$('btnRecord'), btnLay=$('btnLayer'), btnStp=$('btnStop');
+const btnUnd=$('btnUndo'), btnClr=$('btnClear');
+const status=$('status'), ringFg=$('ringFg');
+const ringTime=$('ringTime'), ringLbl=$('ringLbl');
+const trackList=$('tracks'), emptyMsg=$('emptyMsg');
+
+ringFg.style.strokeDasharray=CIRC;
+ringFg.style.strokeDashoffset=CIRC;
+
+// ── audio init
+async function init(){
+  if(ctx) return true;
+  try{ ctx=new(window.AudioContext||window.webkitAudioContext)(); }
+  catch(e){ alert('Web Audio not supported'); return false; }
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false}); }
+  catch(e){ alert('Mic access denied.\nOpen page over https:// and allow mic access.'); ctx.close();ctx=null;return false; }
+  return true;
+}
+
+// ── record
+async function startRec(type){
+  if(!(await init())) return;
+  if(ctx.state==='suspended') await ctx.resume();
+  recType=type; chunks=[]; recording=true;
+  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+  try{ recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{}); }
+  catch(e){ recorder=new MediaRecorder(stream); }
+  recorder.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+  recorder.onstop=finishRec;
+  recorder.start(50);
+  if(type==='layer'&&loopDur>0){
+    const el=(ctx.currentTime-loopStart)%loopDur;
+    const rem=(loopDur-el)*1000;
+    autoStop=setTimeout(stopRec,rem);
+  }
+  ui();
+}
+
+function stopRec(){
+  clearTimeout(autoStop);
+  if(!recorder||recorder.state==='inactive') return;
+  recorder.stop(); recording=false; ui();
+}
+
+async function finishRec(){
+  if(!chunks.length){ui();return;}
+  const blob=new Blob(chunks,{type:chunks[0].type||'audio/webm'});
+  const ab=await blob.arrayBuffer();
+  let buf;
+  try{ buf=await ctx.decodeAudioData(ab); }
+  catch(e){ setStatus('decode error'); ui(); return; }
+
+  if(recType==='first'){
+    loopDur=buf.duration; loopStart=ctx.currentTime;
+    addTrack(buf); scheduleAll(); startAnim();
+  } else {
+    addTrack(fitBuf(buf)); scheduleTrack(tracks[tracks.length-1]);
+  }
+  ui();
+}
+
+function fitBuf(b){
+  const n=Math.round(loopDur*ctx.sampleRate);
+  const out=ctx.createBuffer(b.numberOfChannels,n,ctx.sampleRate);
+  for(let c=0;c<b.numberOfChannels;c++){
+    const s=b.getChannelData(c),d=out.getChannelData(c);
+    d.set(s.subarray(0,Math.min(s.length,n)));
+  }
+  return out;
+}
+
+// ── tracks
+function addTrack(buf){
+  const gain=ctx.createGain(); gain.connect(ctx.destination);
+  const t={id:Date.now(),buf,gain,srcs:[],muted:false,num:tracks.length+1};
+  tracks.push(t); renderTrack(t); return t;
+}
+
+function scheduleTrack(t){
+  stopSrcs(t); if(t.muted) return;
+  const now=ctx.currentTime;
+  const el=(now-loopStart)%loopDur;
+  playLoop(t,now,el);
+}
+
+function scheduleAll(){ tracks.forEach(scheduleTrack); }
+
+function playLoop(t,when,offset){
+  const s=ctx.createBufferSource(); s.buffer=t.buf; s.connect(t.gain);
+  const dur=t.buf.duration, rem=dur-offset;
+  const fade=Math.min(0.005,rem*0.01);
+  t.gain.gain.cancelScheduledValues(when);
+  t.gain.gain.setValueAtTime(0,when);
+  t.gain.gain.linearRampToValueAtTime(1,when+fade);
+  s.start(when,offset);
+  s.onended=()=>{ if(!tracks.find(x=>x.id===t.id)||t.muted)return; playLoop(t,when+rem,0); };
+  t.srcs.push(s);
+}
+
+function stopSrcs(t){ t.srcs.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}}); t.srcs=[]; }
+
+function muteTrack(id){
+  const t=tracks.find(x=>x.id===id); if(!t)return;
+  t.muted=!t.muted;
+  if(t.muted){ t.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.02); setTimeout(()=>stopSrcs(t),30); }
+  else{ scheduleTrack(t); }
+  const el=document.querySelector(`[data-id="${id}"]`);
+  if(el){ el.querySelector('.tbtn').textContent=t.muted?'unmute':'mute'; el.querySelector('.tbtn').classList.toggle('muted',t.muted); }
+}
+
+function delTrack(id){
+  const t=tracks.find(x=>x.id===id); if(!t)return;
+  stopSrcs(t); t.gain.disconnect(); tracks=tracks.filter(x=>x.id!==id);
+  document.querySelector(`[data-id="${id}"]`)?.remove();
+  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n)n.textContent=String(x.num).padStart(2,'0'); });
+  ui();
+}
+
+function undo(){ if(!tracks.length)return; const l=tracks[tracks.length-1]; delTrack(l.id); if(!tracks.length)clearAll(); }
+
+function clearAll(){
+  tracks.forEach(t=>{stopSrcs(t);t.gain.disconnect();}); tracks=[];
+  loopDur=0; loopStart=0; cancelAnimationFrame(raf);
+  trackList.innerHTML=''; trackList.appendChild(emptyMsg);
+  ringFg.style.strokeDashoffset=CIRC;
+  ringTime.textContent='--'; ringLbl.textContent='no loop'; ui();
+}
+
+// ── render
+function renderTrack(t){
+  if(emptyMsg.parentNode) emptyMsg.remove();
+  const el=document.createElement('div');
+  el.className='track'; el.dataset.id=t.id;
+  el.innerHTML=`<div class="tnum">${String(t.num).padStart(2,'0')}</div><div class="tbar"><canvas></canvas><div class="tph"></div></div><button class="tbtn">mute</button><button class="tbtn del">del</button>`;
+  const cv=el.querySelector('canvas');
+  // draw waveform
+  const W=200,H=24; cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const c=cv.getContext('2d'); c.scale(devicePixelRatio,devicePixelRatio);
+  const d=t.buf.getChannelData(0), step=Math.max(1,Math.floor(d.length/W)), mid=H/2;
+  c.strokeStyle='rgba(60,220,120,.65)'; c.lineWidth=1; c.beginPath();
+  for(let x=0;x<W;x++){
+    let mn=1,mx=-1;
+    for(let j=0;j<step;j++){const v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
+    c.moveTo(x,mid+mn*mid*.85); c.lineTo(x,mid+mx*mid*.85);
+  }
+  c.stroke();
+  el.querySelector('.tbtn').onclick=()=>muteTrack(t.id);
+  el.querySelectorAll('.tbtn')[1].onclick=()=>delTrack(t.id);
+  trackList.appendChild(el);
+}
+
+// ── ring animation
+function startAnim(){ cancelAnimationFrame(raf); animFrame(); }
+function animFrame(){
+  if(!ctx||!loopDur) return;
+  const el=(ctx.currentTime-loopStart)%loopDur, prog=el/loopDur;
+  ringFg.style.strokeDashoffset=CIRC*(1-prog);
+  ringTime.textContent=(loopDur-el).toFixed(1)+'s';
+  document.querySelectorAll('.tph').forEach(p=>p.style.left=(prog*100)+'%');
+  raf=requestAnimationFrame(animFrame);
+}
+
+// ── ui state
+function setStatus(t){ status.textContent=t; }
+function ui(){
+  const hasLoop=loopDur>0, isRec=recording;
+  btnRec.disabled=isRec;
+  btnRec.classList.toggle('rec',isRec&&recType==='first');
+  btnLay.disabled=!hasLoop||isRec;
+  btnLay.classList.toggle('rec',isRec&&recType==='layer');
+  btnStp.disabled=!isRec;
+  btnUnd.disabled=!tracks.length||isRec;
+  btnClr.disabled=!tracks.length||isRec;
+  if(isRec) setStatus(recType==='first'?'recording loop…':'recording layer…');
+  else if(hasLoop) setStatus(`playing · ${tracks.length} layer${tracks.length!==1?'s':''}`);
+  else setStatus('ready');
+  if(hasLoop) ringLbl.textContent=loopDur.toFixed(2)+'s loop';
+  ringFg.classList.toggle('rec',isRec);
+}
+
+// ── wire buttons
+btnRec.onclick=()=>startRec('first');
+btnLay.onclick=()=>startRec('layer');
+btnStp.onclick=stopRec;
+btnUnd.onclick=undo;
+btnClr.onclick=clearAll;
+</script>
+
+</body>
+</html>

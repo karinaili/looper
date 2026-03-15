@@ -7,266 +7,481 @@
 <title>LOOPER</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0e0e0e;color:#e8e8e8;font-family:'SF Mono',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;padding:24px}
-h1{font-size:20px;letter-spacing:.3em;font-weight:700}
-#status{font-size:12px;letter-spacing:.1em;color:#666;text-transform:uppercase;height:16px}
-.controls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-button{padding:14px 24px;border:1px solid #333;border-radius:6px;background:#161616;color:#e8e8e8;font-family:inherit;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;min-width:110px}
-button:hover:not(:disabled){border-color:#555;background:#1e1e1e}
-button:disabled{opacity:.3;cursor:not-allowed}
-button:active:not(:disabled){transform:scale(.96)}
-#btnRecord{border-color:rgba(232,69,60,.4);color:#e8453c}
-#btnRecord:hover:not(:disabled){border-color:#e8453c;background:rgba(232,69,60,.1)}
-#btnRecord.rec{animation:blink 1s infinite alternate;background:rgba(232,69,60,.15);border-color:#e8453c}
-#btnLayer{border-color:rgba(255,140,66,.4);color:#ff8c42}
-#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.1)}
-#btnLayer.rec{animation:blink 1s infinite alternate;background:rgba(255,140,66,.15);border-color:#ff8c42}
-@keyframes blink{from{opacity:1}to{opacity:.5}}
-.ring-wrap{position:relative;width:160px;height:160px}
+body{background:#0e0e0e;color:#e8e8e8;font-family:'SF Mono','Fira Code',monospace;display:flex;flex-direction:column;align-items:center;min-height:100vh;gap:20px;padding:28px 20px;-webkit-font-smoothing:antialiased}
+h1{font-size:18px;letter-spacing:.35em;font-weight:700;opacity:.9}
+#status{font-size:11px;letter-spacing:.12em;color:#555;text-transform:uppercase;min-height:16px;text-align:center}
+.ring-wrap{position:relative;width:150px;height:150px}
 svg{width:100%;height:100%;transform:rotate(-90deg)}
-.ring-bg{fill:none;stroke:#1e1e1e;stroke-width:6}
-.ring-fg{fill:none;stroke:#3cdc78;stroke-width:6;stroke-linecap:round;stroke-dasharray:440;stroke-dashoffset:440;transition:stroke .3s}
-.ring-fg.rec{stroke:#e8453c}
-.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.ring-time{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-.ring-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#555}
-#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px}
-.track{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#161616;border:1px solid #2a2a2a;border-radius:6px}
-.tnum{font-size:11px;color:#555;min-width:22px}
-.tbar{flex:1;height:24px;background:#0e0e0e;border-radius:3px;position:relative;overflow:hidden}
-.tbar canvas{width:100%;height:100%;display:block}
-.tph{position:absolute;top:0;bottom:0;width:1px;background:#3cdc78;opacity:.7}
-.tbtn{padding:4px 10px;border:1px solid #2a2a2a;border-radius:3px;background:transparent;color:#666;font-family:inherit;font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .12s}
-.tbtn:hover{border-color:#444;color:#e8e8e8}
-.tbtn.muted{border-color:#e8453c;color:#e8453c}
-.empty{font-size:11px;letter-spacing:.08em;color:#444;text-transform:uppercase;text-align:center;padding:20px}
+.rbg{fill:none;stroke:#1c1c1c;stroke-width:6}
+.rfg{fill:none;stroke:#3cdc78;stroke-width:6;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:408;transition:stroke .2s}
+.rfg.rec{stroke:#e8453c}
+.rfg.waiting{stroke:#ff8c42;animation:pulse .6s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.3}}
+.ring-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.rt{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.rl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#555}
+
+/* Controls */
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+button{padding:12px 20px;border:1px solid #2a2a2a;border-radius:5px;background:#141414;color:#aaa;font-family:inherit;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .12s;min-width:90px}
+button:hover:not(:disabled){border-color:#444;background:#1a1a1a;color:#e8e8e8}
+button:disabled{opacity:.25;cursor:not-allowed}
+button:active:not(:disabled){transform:scale(.95)}
+#btnRec{border-color:rgba(232,69,60,.35);color:#e8453c}
+#btnRec:hover:not(:disabled){border-color:#e8453c;background:rgba(232,69,60,.1)}
+#btnRec.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.08);animation:pulse .7s ease-in-out infinite alternate}
+#btnRec.recording{border-color:#e8453c;color:#e8453c;background:rgba(232,69,60,.12);animation:pulse .6s ease-in-out infinite alternate}
+#btnLayer{border-color:rgba(255,140,66,.35);color:#ff8c42}
+#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.1)}
+#btnLayer.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.1);animation:pulse .7s ease-in-out infinite alternate}
+#btnLayer.recording{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.15);animation:pulse .6s ease-in-out infinite alternate}
+
+/* Tracks */
+#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:7px}
+.empty{font-size:10px;letter-spacing:.1em;color:#333;text-transform:uppercase;text-align:center;padding:24px 0}
+.track{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#141414;border:1px solid #222;border-radius:5px;transition:opacity .2s}
+.track.muted{opacity:.35}
+.tnum{font-size:10px;color:#444;min-width:18px}
+.tbar{flex:1;height:22px;background:#0a0a0a;border-radius:3px;position:relative;overflow:hidden}
+.tbar canvas{display:block;width:100%;height:100%}
+.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.6;pointer-events:none}
+.track.muted .tph{display:none}
+.tbtn{padding:3px 9px;border:1px solid #222;border-radius:3px;background:transparent;color:#444;font-family:inherit;font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .1s;white-space:nowrap}
+.tbtn:hover{border-color:#444;color:#aaa}
+.tbtn.active{border-color:#e8453c;color:#e8453c}
+
+/* Latency note */
+#latencyNote{font-size:9px;letter-spacing:.08em;color:#333;text-transform:uppercase;text-align:center}
 </style>
+
 </head>
 <body>
 <h1>LOOPER</h1>
 <div id="status">ready</div>
 
 <div class="ring-wrap">
-  <svg viewBox="0 0 140 140">
-    <circle class="ring-bg" cx="70" cy="70" r="60"/>
-    <circle class="ring-fg" id="ringFg" cx="70" cy="70" r="60"/>
+  <svg viewBox="0 0 130 130">
+    <circle class="rbg" cx="65" cy="65" r="55"/>
+    <circle class="rfg" id="rfg" cx="65" cy="65" r="55"/>
   </svg>
-  <div class="ring-center">
-    <div class="ring-time" id="ringTime">--</div>
-    <div class="ring-lbl" id="ringLbl">no loop</div>
+  <div class="ring-in">
+    <div class="rt" id="rtime">--</div>
+    <div class="rl" id="rlbl">no loop</div>
   </div>
 </div>
 
-<div class="controls">
-  <button id="btnRecord">⏺ record</button>
+<div class="ctrl">
+  <button id="btnRec">⏺ record</button>
   <button id="btnLayer" disabled>+ layer</button>
   <button id="btnStop" disabled>⏹ stop</button>
 </div>
-<div class="controls">
+<div class="ctrl">
   <button id="btnUndo" disabled>↩ undo</button>
   <button id="btnClear" disabled>✕ clear</button>
 </div>
+<div id="latencyNote"></div>
 
-<div id="tracks"><div class="empty" id="emptyMsg">no layers yet</div></div>
+<div id="tracks"><div class="empty" id="emptyMsg">record first loop to start</div></div>
 
 <script>
-// ── constants
-const CIRC = 2 * Math.PI * 60; // 376.99
+// ════════════════════════════════════════════════════
+//  LOOPER with quantized recording & latency compensation
+//
+//  Key ideas:
+//  1. QUANTIZE: layer recording starts at exact loop boundary,
+//     not when button is pressed. Button press = "arm" → actual
+//     record starts at next cycle boundary via AudioContext scheduling.
+//
+//  2. LATENCY COMPENSATION: AudioContext has input latency
+//     (mic → buffer) and output latency (buffer → speakers).
+//     We offset the recorded audio backward by baseLatency + inputLatency.
+//
+//  3. OVERDUB BUFFER: We start MediaRecorder slightly before the
+//     loop boundary (1 full cycle early) so we capture audio that
+//     started before the boundary, then trim the buffer precisely.
+// ════════════════════════════════════════════════════
 
-// ── state
-let ctx, stream, recorder, chunks=[], recType=null, recording=false;
-let loopDur=0, loopStart=0;
-let tracks=[], raf=null, autoStop=null;
+const CIRC = 2 * Math.PI * 55; // ring circumference
 
-// ── dom
-const $ = id => document.getElementById(id);
-const btnRec=$('btnRecord'), btnLay=$('btnLayer'), btnStp=$('btnStop');
-const btnUnd=$('btnUndo'), btnClr=$('btnClear');
-const status=$('status'), ringFg=$('ringFg');
-const ringTime=$('ringTime'), ringLbl=$('ringLbl');
-const trackList=$('tracks'), emptyMsg=$('emptyMsg');
+// DOM
+const btnRec   = document.getElementById('btnRec');
+const btnLayer = document.getElementById('btnLayer');
+const btnStop  = document.getElementById('btnStop');
+const btnUndo  = document.getElementById('btnUndo');
+const btnClear = document.getElementById('btnClear');
+const rfg      = document.getElementById('rfg');
+const rtime    = document.getElementById('rtime');
+const rlbl     = document.getElementById('rlbl');
+const statusEl = document.getElementById('status');
+const trackList= document.getElementById('tracks');
+const emptyMsg = document.getElementById('emptyMsg');
+const latNote  = document.getElementById('latencyNote');
 
-ringFg.style.strokeDasharray=CIRC;
-ringFg.style.strokeDashoffset=CIRC;
+rfg.style.strokeDasharray  = CIRC;
+rfg.style.strokeDashoffset = CIRC;
 
-// ── audio init
-async function init(){
-  if(ctx) return true;
-  try{ ctx=new(window.AudioContext||window.webkitAudioContext)(); }
-  catch(e){ alert('Web Audio not supported'); return false; }
-  try{ stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false}); }
-  catch(e){ alert('Mic access denied.\nOpen page over https:// and allow mic access.'); ctx.close();ctx=null;return false; }
+// State
+let ctx, stream;
+let loopDur = 0, loopStart = 0;
+let tracks = [];
+let raf = null;
+
+// Recording state
+const REC_STATE = { IDLE:'idle', ARMED_FIRST:'armed_first', RECORDING_FIRST:'recording_first', ARMED_LAYER:'armed_layer', RECORDING_LAYER:'recording_layer' };
+let recState = REC_STATE.IDLE;
+let recorder = null, recChunks = [];
+let recArmTime = 0;       // audioCtx time when recording actually started
+let inputLatency = 0;     // estimated input latency in seconds
+
+// ── INIT ──────────────────────────────────────────
+async function initAudio() {
+  if (ctx) return true;
+  try {
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+  } catch(e) { alert('Web Audio API not supported'); return false; }
+
+  try {
+    // Request mic with echoCancellation off for clean looping
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+  } catch(e) {
+    alert('Mic denied.\nOpen this page over https:// and allow microphone access.');
+    ctx.close(); ctx = null; return false;
+  }
+
+  // Measure latency
+  await ctx.resume();
+  inputLatency = (ctx.baseLatency || 0) + (ctx.inputLatency || 0);
+  if (inputLatency > 0) {
+    latNote.textContent = `latency compensation: ${Math.round(inputLatency*1000)}ms`;
+  }
   return true;
 }
 
-// ── record
-async function startRec(type){
-  if(!(await init())) return;
-  if(ctx.state==='suspended') await ctx.resume();
-  recType=type; chunks=[]; recording=true;
-  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t))||'';
-  try{ recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{}); }
-  catch(e){ recorder=new MediaRecorder(stream); }
-  recorder.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
-  recorder.onstop=finishRec;
-  recorder.start(50);
-  if(type==='layer'&&loopDur>0){
-    const el=(ctx.currentTime-loopStart)%loopDur;
-    const rem=(loopDur-el)*1000;
-    autoStop=setTimeout(stopRec,rem);
-  }
+// ── FIRST LOOP ────────────────────────────────────
+async function armFirst() {
+  if (!(await initAudio())) return;
+  await ctx.resume();
+  recState = REC_STATE.ARMED_FIRST;
+  setStatus('armed — play and stop when ready');
+  ui();
+  // Start recording immediately for first loop (no quantize needed)
+  beginRecording();
+  recState = REC_STATE.RECORDING_FIRST;
   ui();
 }
 
-function stopRec(){
-  clearTimeout(autoStop);
-  if(!recorder||recorder.state==='inactive') return;
-  recorder.stop(); recording=false; ui();
+// ── ADD LAYER ─────────────────────────────────────
+async function armLayer() {
+  if (!loopDur) return;
+  recState = REC_STATE.ARMED_LAYER;
+  setStatus('armed — will start at next loop boundary');
+  ui();
+
+  // Calculate time until next loop boundary
+  const now     = ctx.currentTime;
+  const elapsed = (now - loopStart) % loopDur;
+  const toNext  = loopDur - elapsed;
+
+  // Start MediaRecorder slightly early (one cycle before boundary)
+  // so we have audio buffered right at the moment the loop starts.
+  // We'll trim precisely after decode.
+  const preRoll = Math.min(toNext, loopDur); // start recording now
+  recArmTime = now + toNext; // exact time recording "officially" starts
+
+  beginRecording(); // start capturing audio now (pre-roll)
+
+  // Transition to RECORDING at exact boundary
+  setTimeout(() => {
+    if (recState === REC_STATE.ARMED_LAYER) {
+      recState = REC_STATE.RECORDING_LAYER;
+      setStatus('recording layer…');
+      ui();
+    }
+  }, toNext * 1000);
+
+  // Auto-stop at next boundary after that
+  setTimeout(() => {
+    if (recState === REC_STATE.RECORDING_LAYER) {
+      stopRecording();
+    }
+  }, (toNext + loopDur) * 1000);
 }
 
-async function finishRec(){
-  if(!chunks.length){ui();return;}
-  const blob=new Blob(chunks,{type:chunks[0].type||'audio/webm'});
-  const ab=await blob.arrayBuffer();
-  let buf;
-  try{ buf=await ctx.decodeAudioData(ab); }
-  catch(e){ setStatus('decode error'); ui(); return; }
+// ── BEGIN RECORDING (MediaRecorder) ───────────────
+function beginRecording() {
+  recChunks = [];
+  const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4']
+    .find(t => MediaRecorder.isTypeSupported(t)) || '';
+  try {
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+  } catch(e) {
+    recorder = new MediaRecorder(stream);
+  }
+  recorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
+  recorder.onstop = finishRecording;
+  recorder.start(20); // 20ms chunks for fine granularity
+}
 
-  if(recType==='first'){
-    loopDur=buf.duration; loopStart=ctx.currentTime;
-    addTrack(buf); scheduleAll(); startAnim();
+// ── STOP ──────────────────────────────────────────
+function stopRecording() {
+  if (!recorder || recorder.state === 'inactive') {
+    recState = REC_STATE.IDLE; ui(); return;
+  }
+  recorder.stop();
+}
+
+// ── FINISH & PROCESS ──────────────────────────────
+async function finishRecording() {
+  const wasFirst = recState === REC_STATE.RECORDING_FIRST;
+  const wasLayer = recState === REC_STATE.RECORDING_LAYER;
+  recState = REC_STATE.IDLE;
+
+  if (!recChunks.length) { ui(); return; }
+
+  const blob = new Blob(recChunks, { type: recChunks[0].type || 'audio/webm' });
+  const ab   = await blob.arrayBuffer();
+  let rawBuf;
+  try { rawBuf = await ctx.decodeAudioData(ab); }
+  catch(e) { setStatus('decode error — try again'); ui(); return; }
+
+  if (wasFirst) {
+    // First loop: use as-is, set master duration
+    loopDur   = rawBuf.duration;
+    loopStart = ctx.currentTime; // loops start NOW
+    addTrack(rawBuf);
+    scheduleAll();
+    startAnim();
+
+  } else if (wasLayer) {
+    // Layer: trim to exactly one loop duration, compensating for latency
+    // The raw buffer contains: preRoll audio + one loop of recording
+    // recArmTime = audioCtx time when loop boundary was
+    // We need to find the sample offset corresponding to the boundary.
+
+    const sampleRate  = rawBuf.sampleRate;
+    const now         = ctx.currentTime;
+
+    // How long ago did recording start? (MediaRecorder started before arm time)
+    // The arm time marks the "true" start of the loop
+    const recStartedAt  = recArmTime - loopDur; // when MediaRecorder.start() was called
+    const preRollSecs   = recArmTime - recStartedAt; // = loopDur
+    const preRollSamples= Math.round(preRollSecs * sampleRate);
+    const loopSamples   = Math.round(loopDur * sampleRate);
+
+    // Account for input latency: shift start point earlier
+    const latSamples = Math.round(inputLatency * sampleRate);
+    const startSample = Math.max(0, preRollSamples - latSamples);
+    const endSample   = Math.min(rawBuf.length, startSample + loopSamples);
+
+    const fitted = ctx.createBuffer(rawBuf.numberOfChannels, loopSamples, sampleRate);
+    for (let ch = 0; ch < rawBuf.numberOfChannels; ch++) {
+      const src = rawBuf.getChannelData(ch);
+      const dst = fitted.getChannelData(ch);
+      const copyLen = Math.min(endSample - startSample, loopSamples);
+      if (startSample < src.length) {
+        dst.set(src.subarray(startSample, startSample + copyLen));
+      }
+    }
+
+    addTrack(fitted);
+    scheduleTrack(tracks[tracks.length - 1]);
+  }
+
+  ui();
+}
+
+// ── TRACKS ────────────────────────────────────────
+function addTrack(buf) {
+  const gain = ctx.createGain();
+  gain.connect(ctx.destination);
+  const t = { id: Date.now(), buf, gain, srcs:[], muted:false, num:tracks.length+1 };
+  tracks.push(t);
+  renderTrack(t);
+  return t;
+}
+
+// Schedule a track to loop in sync with the global clock.
+// All tracks share the same loopStart reference point.
+function scheduleTrack(t) {
+  stopSrcs(t);
+  if (t.muted) return;
+  const now     = ctx.currentTime;
+  const elapsed = (now - loopStart) % loopDur;
+  playLoop(t, now, elapsed % t.buf.duration);
+}
+
+function scheduleAll() {
+  tracks.forEach(scheduleTrack);
+}
+
+// Schedule one playback iteration; on ended, schedule the next.
+// Tiny cross-fade (5ms) at boundaries eliminates clicks.
+function playLoop(t, when, offset) {
+  const src = ctx.createBufferSource();
+  src.buffer = t.buf;
+
+  // Cross-fade gain node per-source to avoid click at loop point
+  const fadeGain = ctx.createGain();
+  fadeGain.connect(t.gain);
+  src.connect(fadeGain);
+
+  const dur  = t.buf.duration;
+  const rem  = dur - offset;
+  const fade = 0.004; // 4ms
+
+  fadeGain.gain.setValueAtTime(0, when);
+  fadeGain.gain.linearRampToValueAtTime(1, when + fade);
+  fadeGain.gain.setValueAtTime(1, when + rem - fade);
+  fadeGain.gain.linearRampToValueAtTime(0, when + rem);
+
+  src.start(when, offset);
+  src.onended = () => {
+    if (!tracks.find(x => x.id === t.id) || t.muted) return;
+    playLoop(t, when + rem, 0);
+  };
+  t.srcs.push(src);
+}
+
+function stopSrcs(t) {
+  t.srcs.forEach(s => { try { s.onended=null; s.stop(); } catch(e){} });
+  t.srcs = [];
+}
+
+function muteTrack(id) {
+  const t = tracks.find(x => x.id===id); if(!t) return;
+  t.muted = !t.muted;
+  if (t.muted) {
+    t.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.02);
+    setTimeout(() => stopSrcs(t), 30);
   } else {
-    addTrack(fitBuf(buf)); scheduleTrack(tracks[tracks.length-1]);
+    t.gain.gain.setValueAtTime(1, ctx.currentTime);
+    scheduleTrack(t);
   }
-  ui();
-}
-
-function fitBuf(b){
-  const n=Math.round(loopDur*ctx.sampleRate);
-  const out=ctx.createBuffer(b.numberOfChannels,n,ctx.sampleRate);
-  for(let c=0;c<b.numberOfChannels;c++){
-    const s=b.getChannelData(c),d=out.getChannelData(c);
-    d.set(s.subarray(0,Math.min(s.length,n)));
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) {
+    el.classList.toggle('muted', t.muted);
+    const btn = el.querySelector('.mute-btn');
+    if (btn) { btn.textContent = t.muted ? 'unmute' : 'mute'; btn.classList.toggle('active', t.muted); }
   }
-  return out;
 }
 
-// ── tracks
-function addTrack(buf){
-  const gain=ctx.createGain(); gain.connect(ctx.destination);
-  const t={id:Date.now(),buf,gain,srcs:[],muted:false,num:tracks.length+1};
-  tracks.push(t); renderTrack(t); return t;
-}
-
-function scheduleTrack(t){
-  stopSrcs(t); if(t.muted) return;
-  const now=ctx.currentTime;
-  const el=(now-loopStart)%loopDur;
-  playLoop(t,now,el);
-}
-
-function scheduleAll(){ tracks.forEach(scheduleTrack); }
-
-function playLoop(t,when,offset){
-  const s=ctx.createBufferSource(); s.buffer=t.buf; s.connect(t.gain);
-  const dur=t.buf.duration, rem=dur-offset;
-  const fade=Math.min(0.005,rem*0.01);
-  t.gain.gain.cancelScheduledValues(when);
-  t.gain.gain.setValueAtTime(0,when);
-  t.gain.gain.linearRampToValueAtTime(1,when+fade);
-  s.start(when,offset);
-  s.onended=()=>{ if(!tracks.find(x=>x.id===t.id)||t.muted)return; playLoop(t,when+rem,0); };
-  t.srcs.push(s);
-}
-
-function stopSrcs(t){ t.srcs.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}}); t.srcs=[]; }
-
-function muteTrack(id){
-  const t=tracks.find(x=>x.id===id); if(!t)return;
-  t.muted=!t.muted;
-  if(t.muted){ t.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.02); setTimeout(()=>stopSrcs(t),30); }
-  else{ scheduleTrack(t); }
-  const el=document.querySelector(`[data-id="${id}"]`);
-  if(el){ el.querySelector('.tbtn').textContent=t.muted?'unmute':'mute'; el.querySelector('.tbtn').classList.toggle('muted',t.muted); }
-}
-
-function delTrack(id){
-  const t=tracks.find(x=>x.id===id); if(!t)return;
-  stopSrcs(t); t.gain.disconnect(); tracks=tracks.filter(x=>x.id!==id);
+function delTrack(id) {
+  const t = tracks.find(x => x.id===id); if(!t) return;
+  stopSrcs(t); t.gain.disconnect();
+  tracks = tracks.filter(x => x.id!==id);
   document.querySelector(`[data-id="${id}"]`)?.remove();
-  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n)n.textContent=String(x.num).padStart(2,'0'); });
+  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n) n.textContent=String(x.num).padStart(2,'0'); });
   ui();
 }
 
-function undo(){ if(!tracks.length)return; const l=tracks[tracks.length-1]; delTrack(l.id); if(!tracks.length)clearAll(); }
-
-function clearAll(){
-  tracks.forEach(t=>{stopSrcs(t);t.gain.disconnect();}); tracks=[];
-  loopDur=0; loopStart=0; cancelAnimationFrame(raf);
-  trackList.innerHTML=''; trackList.appendChild(emptyMsg);
-  ringFg.style.strokeDashoffset=CIRC;
-  ringTime.textContent='--'; ringLbl.textContent='no loop'; ui();
+function undo() {
+  if (!tracks.length) return;
+  delTrack(tracks[tracks.length-1].id);
+  if (!tracks.length) clearAll();
 }
 
-// ── render
-function renderTrack(t){
-  if(emptyMsg.parentNode) emptyMsg.remove();
-  const el=document.createElement('div');
-  el.className='track'; el.dataset.id=t.id;
-  el.innerHTML=`<div class="tnum">${String(t.num).padStart(2,'0')}</div><div class="tbar"><canvas></canvas><div class="tph"></div></div><button class="tbtn">mute</button><button class="tbtn del">del</button>`;
-  const cv=el.querySelector('canvas');
-  // draw waveform
-  const W=200,H=24; cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
-  cv.style.width=W+'px'; cv.style.height=H+'px';
-  const c=cv.getContext('2d'); c.scale(devicePixelRatio,devicePixelRatio);
-  const d=t.buf.getChannelData(0), step=Math.max(1,Math.floor(d.length/W)), mid=H/2;
-  c.strokeStyle='rgba(60,220,120,.65)'; c.lineWidth=1; c.beginPath();
-  for(let x=0;x<W;x++){
-    let mn=1,mx=-1;
-    for(let j=0;j<step;j++){const v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    c.moveTo(x,mid+mn*mid*.85); c.lineTo(x,mid+mx*mid*.85);
+function clearAll() {
+  tracks.forEach(t => { stopSrcs(t); t.gain.disconnect(); });
+  tracks = []; loopDur = 0; loopStart = 0;
+  cancelAnimationFrame(raf);
+  trackList.innerHTML = ''; trackList.appendChild(emptyMsg);
+  rfg.style.strokeDashoffset = CIRC;
+  rfg.classList.remove('rec','waiting');
+  rtime.textContent = '--'; rlbl.textContent = 'no loop';
+  recState = REC_STATE.IDLE;
+  ui();
+}
+
+// ── RENDER TRACK ──────────────────────────────────
+function renderTrack(t) {
+  if (emptyMsg.parentNode) emptyMsg.remove();
+  const el = document.createElement('div');
+  el.className = 'track';
+  el.dataset.id = t.id;
+  el.innerHTML = `
+    <div class="tnum">${String(t.num).padStart(2,'0')}</div>
+    <div class="tbar"><canvas></canvas><div class="tph"></div></div>
+    <button class="tbtn mute-btn">mute</button>
+    <button class="tbtn del-btn">del</button>`;
+
+  // Draw waveform
+  const cv = el.querySelector('canvas');
+  const W=200, H=22;
+  cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+  cv.style.width = W+'px'; cv.style.height = H+'px';
+  const c = cv.getContext('2d'); c.scale(devicePixelRatio, devicePixelRatio);
+  const d = t.buf.getChannelData(0);
+  const step = Math.max(1, Math.floor(d.length / W));
+  const mid  = H / 2;
+  c.strokeStyle = 'rgba(60,220,120,.6)'; c.lineWidth = 1; c.beginPath();
+  for (let x=0;x<W;x++) {
+    let mn=1, mx=-1;
+    for (let j=0;j<step;j++) { const v=d[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+    c.moveTo(x, mid+mn*mid*.8); c.lineTo(x, mid+mx*mid*.8);
   }
   c.stroke();
-  el.querySelector('.tbtn').onclick=()=>muteTrack(t.id);
-  el.querySelectorAll('.tbtn')[1].onclick=()=>delTrack(t.id);
+
+  el.querySelector('.mute-btn').onclick = () => muteTrack(t.id);
+  el.querySelector('.del-btn').onclick  = () => delTrack(t.id);
   trackList.appendChild(el);
+  el.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:200,fill:'forwards'});
 }
 
-// ── ring animation
-function startAnim(){ cancelAnimationFrame(raf); animFrame(); }
-function animFrame(){
-  if(!ctx||!loopDur) return;
-  const el=(ctx.currentTime-loopStart)%loopDur, prog=el/loopDur;
-  ringFg.style.strokeDashoffset=CIRC*(1-prog);
-  ringTime.textContent=(loopDur-el).toFixed(1)+'s';
-  document.querySelectorAll('.tph').forEach(p=>p.style.left=(prog*100)+'%');
-  raf=requestAnimationFrame(animFrame);
+// ── ANIMATION ─────────────────────────────────────
+function startAnim() { cancelAnimationFrame(raf); animFrame(); }
+function animFrame() {
+  if (!ctx || !loopDur) return;
+  const el   = (ctx.currentTime - loopStart) % loopDur;
+  const prog = el / loopDur;
+  rfg.style.strokeDashoffset = CIRC * (1 - prog);
+  rtime.textContent = (loopDur - el).toFixed(1) + 's';
+  document.querySelectorAll('.tph').forEach(ph => ph.style.left = (prog*100)+'%');
+  raf = requestAnimationFrame(animFrame);
 }
 
-// ── ui state
-function setStatus(t){ status.textContent=t; }
-function ui(){
-  const hasLoop=loopDur>0, isRec=recording;
-  btnRec.disabled=isRec;
-  btnRec.classList.toggle('rec',isRec&&recType==='first');
-  btnLay.disabled=!hasLoop||isRec;
-  btnLay.classList.toggle('rec',isRec&&recType==='layer');
-  btnStp.disabled=!isRec;
-  btnUnd.disabled=!tracks.length||isRec;
-  btnClr.disabled=!tracks.length||isRec;
-  if(isRec) setStatus(recType==='first'?'recording loop…':'recording layer…');
-  else if(hasLoop) setStatus(`playing · ${tracks.length} layer${tracks.length!==1?'s':''}`);
-  else setStatus('ready');
-  if(hasLoop) ringLbl.textContent=loopDur.toFixed(2)+'s loop';
-  ringFg.classList.toggle('rec',isRec);
+// ── UI ────────────────────────────────────────────
+function setStatus(t) { statusEl.textContent = t; }
+
+function ui() {
+  const isIdle = recState === REC_STATE.IDLE;
+  const isArmedFirst = recState === REC_STATE.ARMED_FIRST;
+  const isRecFirst   = recState === REC_STATE.RECORDING_FIRST;
+  const isArmedLayer = recState === REC_STATE.ARMED_LAYER;
+  const isRecLayer   = recState === REC_STATE.RECORDING_LAYER;
+  const isRecording  = isRecFirst || isRecLayer;
+  const isArmed      = isArmedFirst || isArmedLayer;
+  const hasLoop      = loopDur > 0;
+
+  btnRec.disabled    = !isIdle || isArmed || isRecording;
+  btnLayer.disabled  = !isIdle || !hasLoop;
+  btnStop.disabled   = isIdle && !isArmed;
+  btnUndo.disabled   = !tracks.length || !isIdle;
+  btnClear.disabled  = !tracks.length || !isIdle;
+
+  btnRec.className   = isArmedFirst ? 'armed' : isRecFirst ? 'recording' : '';
+  btnLayer.className = isArmedLayer ? 'armed' : isRecLayer ? 'recording' : '';
+
+  rfg.classList.toggle('rec',     isRecording);
+  rfg.classList.toggle('waiting', isArmed);
+
+  if (isArmedFirst || isRecFirst) { setStatus(isArmedFirst ? 'ready — recording started' : 'recording first loop…'); }
+  else if (isArmedLayer)  { setStatus('armed — waiting for loop boundary…'); }
+  else if (isRecLayer)    { setStatus('recording layer…'); }
+  else if (hasLoop)       { setStatus(`playing · ${tracks.length} layer${tracks.length!==1?'s':''}` ); rlbl.textContent = loopDur.toFixed(2)+'s loop'; }
+  else                    { setStatus('ready'); }
 }
 
-// ── wire buttons
-btnRec.onclick=()=>startRec('first');
-btnLay.onclick=()=>startRec('layer');
-btnStp.onclick=stopRec;
-btnUnd.onclick=undo;
-btnClr.onclick=clearAll;
+// ── BUTTON WIRING ─────────────────────────────────
+btnRec.onclick   = armFirst;
+btnLayer.onclick = armLayer;
+btnStop.onclick  = stopRecording;
+btnUndo.onclick  = undo;
+btnClear.onclick = clearAll;
+
+// Init UI
+ui();
 </script>
 
 </body>

@@ -1,11 +1,5 @@
-<!DOCTYPE html>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LOOPER</title><style>
 
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LOOPER</title>
-  <style>
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -423,506 +417,384 @@ animation: pulse-dot 0.6s ease-in-out infinite alternate;
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(–border); border-radius: 2px; }
-</style>
-
-</head>
-<body>
-  <div class="app">
-    <header>
-      <div class="logo">LOOPER</div>
-      <div class="status-bar">
-        <span class="status-dot" id="statusDot"></span>
-        <span class="status-text" id="statusText">ready</span>
-      </div>
-    </header>
-    <div class="cycle-display">
-      <svg class="ring" viewBox="0 0 200 200">
-        <circle class="ring-bg" cx="100" cy="100" r="88"/>
-        <circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="88"/>
-      </svg>
-      <div class="cycle-inner">
-        <div class="cycle-time" id="cycleTime">--</div>
-        <div class="cycle-label" id="cycleLabel">no loop</div>
-      </div>
-    </div>
-    <div class="controls">
-      <button class="btn btn-record" id="btnRecord">
-        <span class="btn-icon">⏺</span>
-        <span class="btn-label">record</span>
-      </button>
-      <button class="btn btn-layer" id="btnLayer" disabled>
-        <span class="btn-icon">+</span>
-        <span class="btn-label">add layer</span>
-      </button>
-      <button class="btn btn-stop" id="btnStop" disabled>
-        <span class="btn-icon">⏹</span>
-        <span class="btn-label">stop</span>
-      </button>
-    </div>
-    <div class="controls-secondary">
-      <button class="btn-sm" id="btnUndo" disabled>undo</button>
-      <button class="btn-sm btn-clear" id="btnClear" disabled>clear all</button>
-    </div>
-    <div class="tracks" id="tracksList">
-      <div class="tracks-empty" id="tracksEmpty">no layers yet — hit record to start</div>
-    </div>
-  </div>
-  <script>
+</style></head><body><div class="app"><header><div class="logo">LOOPER</div><div class="status-bar"><span class="status-dot" id="statusDot"></span><span class="status-text" id="statusText">ready</span></div></header><div class="cycle-display"><svg class="ring" viewBox="0 0 200 200"><circle class="ring-bg" cx="100" cy="100" r="88"/><circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="88"/></svg><div class="cycle-inner"><div class="cycle-time" id="cycleTime">–</div><div class="cycle-label" id="cycleLabel">no loop</div></div></div><div class="controls"><button class="btn btn-record" id="btnRecord"><span class="btn-icon">⏺</span><span class="btn-label">record</span></button><button class="btn btn-layer" id="btnLayer" disabled><span class="btn-icon">+</span><span class="btn-label">add layer</span></button><button class="btn btn-stop" id="btnStop" disabled><span class="btn-icon">⏹</span><span class="btn-label">stop</span></button></div><div class="controls-secondary"><button class="btn-sm" id="btnUndo" disabled>undo</button><button class="btn-sm btn-clear" id="btnClear" disabled>clear all</button></div><div class="tracks" id="tracksList"><div class="tracks-empty" id="tracksEmpty">no layers yet — hit record to start</div></div></div><script>
 // ═══════════════════════════════════════════════════════════
 //  LOOPER — Web Audio API Loop Station
 // ═══════════════════════════════════════════════════════════
 
-// ── STATE ──────────────────────────────────────────────────
+const RING_CIRCUMFERENCE = 2 * Math.PI * 88;
 
-const state = {
-audioCtx: null,        // AudioContext
-stream: null,          // MediaStream from mic
-mediaRecorder: null,   // MediaRecorder instance
-
-loopDuration: 0,       // Length of the cycle in seconds (set by first recording)
-loopStart: 0,          // audioCtx.currentTime when the loop cycle started
-
-tracks: [],            // Array of track objects
-isRecording: false,
-recordingType: null,   // ‘first’ | ‘layer’
-recordingChunks: [],   // Collected audio chunks during recording
-
-rafId: null,           // requestAnimationFrame id for ring progress
-};
-
-// ── DOM REFS ───────────────────────────────────────────────
-
-const btnRecord   = document.getElementById(‘btnRecord’);
-const btnLayer    = document.getElementById(‘btnLayer’);
-const btnStop     = document.getElementById(‘btnStop’);
-const btnUndo     = document.getElementById(‘btnUndo’);
-const btnClear    = document.getElementById(‘btnClear’);
-const statusDot   = document.getElementById(‘statusDot’);
-const statusText  = document.getElementById(‘statusText’);
-const cycleTime   = document.getElementById(‘cycleTime’);
-const cycleLabel  = document.getElementById(‘cycleLabel’);
+// ── DOM ────────────────────────────────────────────────────
+const btnRecord    = document.getElementById(‘btnRecord’);
+const btnLayer     = document.getElementById(‘btnLayer’);
+const btnStop      = document.getElementById(‘btnStop’);
+const btnUndo      = document.getElementById(‘btnUndo’);
+const btnClear     = document.getElementById(‘btnClear’);
+const statusDot    = document.getElementById(‘statusDot’);
+const statusText   = document.getElementById(‘statusText’);
+const cycleTime    = document.getElementById(‘cycleTime’);
+const cycleLabel   = document.getElementById(‘cycleLabel’);
 const ringProgress = document.getElementById(‘ringProgress’);
-const tracksList  = document.getElementById(‘tracksList’);
-const tracksEmpty = document.getElementById(‘tracksEmpty’);
+const tracksList   = document.getElementById(‘tracksList’);
+const tracksEmpty  = document.getElementById(‘tracksEmpty’);
 
-const RING_CIRCUMFERENCE = 2 * Math.PI * 88; // 553px
+// ── STATE ──────────────────────────────────────────────────
+let audioCtx      = null;
+let micStream     = null;
+let mediaRecorder = null;
+let recChunks     = [];
+let recType       = null;   // ‘first’ | ‘layer’
+let isRecording   = false;
 
-// ── AUDIO CONTEXT ──────────────────────────────────────────
+let loopDuration  = 0;
+let loopStartTime = 0;      // audioCtx.currentTime when cycle began
+let tracks        = [];     // { id, buffer, gainNode, sources, muted, num }
+let rafId         = null;
+let autoStopTimer = null;
 
+// ── INIT AUDIO ─────────────────────────────────────────────
 async function initAudio() {
-if (state.audioCtx) return;
-state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+if (audioCtx) return true;
 
-// Request microphone
 try {
-state.stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-} catch (err) {
-alert(‘Microphone access denied. Please allow mic access and reload.’);
-throw err;
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+} catch (e) {
+alert(‘Web Audio API not supported in this browser.’);
+return false;
 }
+
+try {
+micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+} catch (e) {
+alert(‘Could not access microphone.\n\nMake sure:\n• The page is served over HTTPS or localhost\n• You allow mic access when prompted’);
+audioCtx.close();
+audioCtx = null;
+return false;
+}
+
+return true;
 }
 
 // ── RECORDING ──────────────────────────────────────────────
-
 async function startRecording(type) {
-await initAudio();
-if (state.audioCtx.state === ‘suspended’) {
-await state.audioCtx.resume();
+const ok = await initAudio();
+if (!ok) return;
+
+if (audioCtx.state === ‘suspended’) await audioCtx.resume();
+
+recType    = type;
+recChunks  = [];
+isRecording = true;
+
+// Pick best supported format
+const mime = [‘audio/webm;codecs=opus’,‘audio/webm’,‘audio/ogg’,‘audio/mp4’]
+.find(t => MediaRecorder.isTypeSupported(t)) || ‘’;
+
+try {
+mediaRecorder = new MediaRecorder(micStream, mime ? { mimeType: mime } : {});
+} catch (e) {
+mediaRecorder = new MediaRecorder(micStream);
 }
 
-state.isRecording = true;
-state.recordingType = type;
-state.recordingChunks = [];
+mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
+mediaRecorder.onstop = finishRecording;
+mediaRecorder.onerror = e => { console.error(‘MediaRecorder error’, e); };
 
-const options = { mimeType: getSupportedMimeType() };
-state.mediaRecorder = new MediaRecorder(state.stream, options);
+mediaRecorder.start(50);
 
-state.mediaRecorder.ondataavailable = (e) => {
-if (e.data.size > 0) state.recordingChunks.push(e.data);
-};
-
-state.mediaRecorder.onstop = handleRecordingStop;
-state.mediaRecorder.start(100); // collect every 100ms
-
-// If recording a layer, auto-stop at end of current cycle
-if (type === ‘layer’ && state.loopDuration > 0) {
-const now = state.audioCtx.currentTime;
-const elapsed = (now - state.loopStart) % state.loopDuration;
-const remaining = state.loopDuration - elapsed;
-setTimeout(() => {
-if (state.isRecording) stopRecording();
-}, remaining * 1000);
+// Auto-stop layer at end of current cycle
+if (type === ‘layer’ && loopDuration > 0) {
+const elapsed   = (audioCtx.currentTime - loopStartTime) % loopDuration;
+const remaining = (loopDuration - elapsed) * 1000;
+autoStopTimer = setTimeout(stopRecording, remaining);
 }
 
 updateUI();
 }
 
 function stopRecording() {
-if (!state.mediaRecorder || state.mediaRecorder.state === ‘inactive’) return;
-state.mediaRecorder.stop();
-state.isRecording = false;
+clearTimeout(autoStopTimer);
+if (!mediaRecorder || mediaRecorder.state === ‘inactive’) return;
+mediaRecorder.stop();
+isRecording = false;
+updateUI();
 }
 
-async function handleRecordingStop() {
-const mimeType = getSupportedMimeType();
-const blob = new Blob(state.recordingChunks, { type: mimeType });
+async function finishRecording() {
+if (recChunks.length === 0) { updateUI(); return; }
+
+const blob        = new Blob(recChunks, { type: recChunks[0].type || ‘audio/webm’ });
 const arrayBuffer = await blob.arrayBuffer();
 
 let audioBuffer;
 try {
-audioBuffer = await state.audioCtx.decodeAudioData(arrayBuffer);
-} catch (err) {
-console.error(‘Failed to decode audio:’, err);
+audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+} catch (e) {
+console.error(‘Decode error’, e);
+setStatus(‘decode error — try again’, false);
 updateUI();
 return;
 }
 
-if (state.recordingType === ‘first’) {
-// First recording sets the loop duration
-state.loopDuration = audioBuffer.duration;
-state.loopStart = state.audioCtx.currentTime;
-addTrack(audioBuffer, true);
+if (recType === ‘first’) {
+// First recording sets the master loop duration
+loopDuration  = audioBuffer.duration;
+loopStartTime = audioCtx.currentTime;
+createTrack(audioBuffer);
 scheduleAllTracks();
+startRingAnim();
 } else {
-// Layer recording: fit to loop duration
-const fittedBuffer = fitToLoop(audioBuffer, state.loopDuration);
-addTrack(fittedBuffer, false);
-scheduleTrack(state.tracks[state.tracks.length - 1]);
+// Fit to loop duration (pad or trim)
+const fitted = fitBuffer(audioBuffer);
+createTrack(fitted);
+// Find next loop boundary and schedule from there
+scheduleTrack(tracks[tracks.length - 1]);
 }
 
 updateUI();
-startRingAnimation();
 }
 
-// Fit a buffer to exactly loopDuration seconds
-// If shorter: pad with silence. If longer: trim.
-function fitToLoop(buffer, duration) {
-const ctx = state.audioCtx;
-const targetFrames = Math.ceil(duration * ctx.sampleRate);
-const fitted = ctx.createBuffer(buffer.numberOfChannels, targetFrames, ctx.sampleRate);
-
-for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-const src = buffer.getChannelData(ch);
-const dst = fitted.getChannelData(ch);
-const copyLen = Math.min(src.length, targetFrames);
-dst.set(src.subarray(0, copyLen));
-// Remaining samples stay 0 (silence)
+// Pad / trim buffer to exactly loopDuration
+function fitBuffer(buf) {
+const targetSamples = Math.round(loopDuration * audioCtx.sampleRate);
+const out = audioCtx.createBuffer(buf.numberOfChannels, targetSamples, audioCtx.sampleRate);
+for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+const src = buf.getChannelData(ch);
+const dst = out.getChannelData(ch);
+dst.set(src.subarray(0, Math.min(src.length, targetSamples)));
+}
+return out;
 }
 
-return fitted;
-}
+// ── TRACKS ─────────────────────────────────────────────────
+function createTrack(buffer) {
+const gainNode = audioCtx.createGain();
+gainNode.connect(audioCtx.destination);
 
-// ── TRACK MANAGEMENT ───────────────────────────────────────
-
-function addTrack(audioBuffer, isFirst) {
-const id = Date.now();
 const track = {
-id,
-buffer: audioBuffer,
-muted: false,
-sources: [],  // Active AudioBufferSourceNodes
-gainNode: state.audioCtx.createGain(),
-num: state.tracks.length + 1,
+id:       Date.now(),
+buffer,
+gainNode,
+sources:  [],
+muted:    false,
+num:      tracks.length + 1,
 };
-
-track.gainNode.connect(state.audioCtx.destination);
-state.tracks.push(track);
-renderTrackDOM(track);
-
+tracks.push(track);
+renderTrack(track);
 return track;
 }
 
-// Schedule a single track to loop in sync with the global clock
+// Schedule a track to loop in sync with the global clock
 function scheduleTrack(track) {
-// Stop existing sources
-stopTrackSources(track);
-
+stopSources(track);
 if (track.muted) return;
 
-const ctx = state.audioCtx;
-const now = ctx.currentTime;
-
-// Calculate where we are in the current cycle
-const elapsed = (now - state.loopStart) % state.loopDuration;
-// The track should start from ‘elapsed’ offset so it aligns
-const offset = elapsed % track.buffer.duration;
-
-// Schedule current iteration (starting mid-way through)
-const src1 = ctx.createBufferSource();
-src1.buffer = track.buffer;
-src1.connect(track.gainNode);
-src1.start(now, offset);
-
-// We’ll let the loop scheduling handle continuation
-src1.onended = () => loopTrack(track, now + (track.buffer.duration - offset));
-
-track.sources.push(src1);
+const now     = audioCtx.currentTime;
+// How far into the current cycle are we?
+const elapsed = (now - loopStartTime) % loopDuration;
+// Start the buffer at ‘elapsed’ so it’s in sync
+playLooping(track, now, elapsed);
 }
 
-// Re-schedule all tracks (e.g., after adding first loop)
 function scheduleAllTracks() {
-state.tracks.forEach(t => scheduleTrack(t));
+tracks.forEach(t => scheduleTrack(t));
 }
 
-// Called when a source ends — schedule the next iteration
-function loopTrack(track, nextStartTime) {
-if (track.muted) return;
-if (!state.tracks.find(t => t.id === track.id)) return; // track deleted
-
-const ctx = state.audioCtx;
-const src = ctx.createBufferSource();
+// Start one iteration of the loop; schedule the next on ended
+function playLooping(track, when, offset) {
+const src = audioCtx.createBufferSource();
 src.buffer = track.buffer;
 src.connect(track.gainNode);
 
-// Apply tiny fade in/out to reduce clicks at loop points
-const fadeTime = 0.005; // 5ms
-track.gainNode.gain.setValueAtTime(0, nextStartTime);
-track.gainNode.gain.linearRampToValueAtTime(1, nextStartTime + fadeTime);
-track.gainNode.gain.setValueAtTime(1, nextStartTime + track.buffer.duration - fadeTime);
-track.gainNode.gain.linearRampToValueAtTime(0, nextStartTime + track.buffer.duration);
+const duration  = track.buffer.duration;
+const remaining = duration - offset;
 
-src.start(nextStartTime);
-src.onended = () => loopTrack(track, nextStartTime + track.buffer.duration);
+// Tiny fade to avoid clicks at loop boundaries
+const fade = Math.min(0.005, remaining * 0.01);
+track.gainNode.gain.cancelScheduledValues(when);
+track.gainNode.gain.setValueAtTime(0, when);
+track.gainNode.gain.linearRampToValueAtTime(1, when + fade);
 
-// Clean up old sources
-track.sources = track.sources.filter(s => s !== src);
+src.start(when, offset);
+
+// When this iteration ends, schedule the next one
+src.onended = () => {
+if (!tracks.find(t => t.id === track.id)) return; // deleted
+if (track.muted) return;
+const nextWhen = when + remaining;
+playLooping(track, nextWhen, 0);
+};
+
 track.sources.push(src);
 }
 
-function stopTrackSources(track) {
-track.sources.forEach(src => {
-try { src.onended = null; src.stop(); } catch(e) {}
+function stopSources(track) {
+track.sources.forEach(s => {
+try { s.onended = null; s.stop(); } catch (e) {}
 });
 track.sources = [];
 }
 
-function stopAllTracks() {
-state.tracks.forEach(t => stopTrackSources(t));
-}
-
-function muteTrack(id) {
-const track = state.tracks.find(t => t.id === id);
-if (!track) return;
-track.muted = !track.muted;
-
-if (track.muted) {
-track.gainNode.gain.setValueAtTime(0, state.audioCtx.currentTime);
-stopTrackSources(track);
+function muteToggle(id) {
+const t = tracks.find(t => t.id === id);
+if (!t) return;
+t.muted = !t.muted;
+if (t.muted) {
+t.gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.02);
+setTimeout(() => stopSources(t), 30);
 } else {
-track.gainNode.gain.setValueAtTime(1, state.audioCtx.currentTime);
-scheduleTrack(track);
+scheduleTrack(t);
 }
-
-// Update DOM
 const el = document.querySelector(`[data-id="${id}"]`);
 if (el) {
-el.classList.toggle(‘muted’, track.muted);
-const muteBtn = el.querySelector(’.mute-btn’);
-if (muteBtn) {
-muteBtn.textContent = track.muted ? ‘unmute’ : ‘mute’;
-muteBtn.classList.toggle(‘active’, track.muted);
-}
+el.classList.toggle(‘muted’, t.muted);
+const btn = el.querySelector(’.mute-btn’);
+if (btn) { btn.textContent = t.muted ? ‘unmute’ : ‘mute’; btn.classList.toggle(‘active’, t.muted); }
 }
 }
 
 function deleteTrack(id) {
-const track = state.tracks.find(t => t.id === id);
-if (!track) return;
-stopTrackSources(track);
-track.gainNode.disconnect();
-state.tracks = state.tracks.filter(t => t.id !== id);
-
-const el = document.querySelector(`[data-id="${id}"]`);
-if (el) el.remove();
-
-// Re-number tracks
-state.tracks.forEach((t, i) => {
+const t = tracks.find(t => t.id === id);
+if (!t) return;
+stopSources(t);
+t.gainNode.disconnect();
+tracks = tracks.filter(x => x.id !== id);
+document.querySelector(`[data-id="${id}"]`)?.remove();
+tracks.forEach((t, i) => {
 t.num = i + 1;
-const numEl = document.querySelector(`[data-id="${t.id}"] .track-num`);
-if (numEl) numEl.textContent = String(t.num).padStart(2, ‘0’);
+const n = document.querySelector(`[data-id="${t.id}"] .track-num`);
+if (n) n.textContent = String(t.num).padStart(2, ‘0’);
 });
-
 updateUI();
 }
 
 function undoLast() {
-if (state.tracks.length === 0) return;
-const last = state.tracks[state.tracks.length - 1];
+if (!tracks.length) return;
+const last = tracks[tracks.length - 1];
 deleteTrack(last.id);
-
-if (state.tracks.length === 0) {
-clearAll();
-}
+if (!tracks.length) clearAll();
 }
 
 function clearAll() {
-stopAllTracks();
-state.tracks = [];
-state.loopDuration = 0;
-state.loopStart = 0;
-cancelAnimationFrame(state.rafId);
-
+tracks.forEach(t => { stopSources(t); t.gainNode.disconnect(); });
+tracks = [];
+loopDuration  = 0;
+loopStartTime = 0;
+cancelAnimationFrame(rafId);
 tracksList.innerHTML = ‘’;
 tracksList.appendChild(tracksEmpty);
-
 ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE;
-cycleTime.textContent = ‘–’;
+cycleTime.textContent  = ‘–’;
 cycleLabel.textContent = ‘no loop’;
-
 updateUI();
 }
 
-// ── DOM / RENDERING ────────────────────────────────────────
-
-function renderTrackDOM(track) {
-// Remove empty state
-if (tracksEmpty.parentNode) tracksEmpty.remove();
+// ── RENDER TRACK ───────────────────────────────────────────
+function renderTrack(track) {
+tracksEmpty.remove?.();
+if (tracksEmpty.parentNode) tracksEmpty.parentNode.removeChild(tracksEmpty);
 
 const el = document.createElement(‘div’);
-el.className = ‘track’;
+el.className  = ‘track’;
 el.dataset.id = track.id;
+el.innerHTML  = ` <div class="track-num">${String(track.num).padStart(2,'0')}</div> <div class="track-wave"><canvas></canvas><div class="track-playhead"></div></div> <div class="track-label">layer</div> <div class="track-actions"> <button class="track-btn mute-btn">mute</button> <button class="track-btn del-btn">del</button> </div>`;
 
-el.innerHTML = `<div class="track-num">${String(track.num).padStart(2, '0')}</div> <div class="track-wave"> <canvas></canvas> <div class="track-playhead"></div> </div> <div class="track-label">layer</div> <div class="track-actions"> <button class="track-btn mute-btn">mute</button> <button class="track-btn del-btn">del</button> </div>`;
-
-// Draw waveform
-const canvas = el.querySelector(‘canvas’);
-drawWaveform(canvas, track.buffer);
-
-// Buttons
-el.querySelector(’.mute-btn’).onclick = () => muteTrack(track.id);
+drawWaveform(el.querySelector(‘canvas’), track.buffer);
+el.querySelector(’.mute-btn’).onclick = () => muteToggle(track.id);
 el.querySelector(’.del-btn’).onclick  = () => deleteTrack(track.id);
-
 tracksList.appendChild(el);
 
-// Animate in
-el.style.opacity = ‘0’;
-el.style.transform = ‘translateY(8px)’;
 requestAnimationFrame(() => {
-el.style.transition = ‘opacity 0.25s, transform 0.25s’;
-el.style.opacity = ‘1’;
-el.style.transform = ‘translateY(0)’;
+el.style.cssText += ‘transition:opacity .25s,transform .25s;opacity:1;transform:translateY(0)’;
 });
+el.style.cssText = ‘opacity:0;transform:translateY(8px)’;
 }
 
 function drawWaveform(canvas, buffer) {
+const W = 200, H = 28;
+canvas.width  = W * devicePixelRatio;
+canvas.height = H * devicePixelRatio;
+canvas.style.width  = W + ‘px’;
+canvas.style.height = H + ‘px’;
 const ctx = canvas.getContext(‘2d’);
-const W = canvas.offsetWidth || 200;
-const H = canvas.offsetHeight || 28;
-canvas.width = W * (window.devicePixelRatio || 1);
-canvas.height = H * (window.devicePixelRatio || 1);
-ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+ctx.scale(devicePixelRatio, devicePixelRatio);
 
 const data = buffer.getChannelData(0);
-const step = Math.ceil(data.length / W);
-const mid = H / 2;
-
-ctx.strokeStyle = ‘rgba(60, 220, 120, 0.6)’;
-ctx.lineWidth = 1;
+const step = Math.max(1, Math.floor(data.length / W));
+const mid  = H / 2;
+ctx.strokeStyle = ‘rgba(60,220,120,0.65)’;
+ctx.lineWidth   = 1;
 ctx.beginPath();
-
 for (let x = 0; x < W; x++) {
-let min = 1, max = -1;
-for (let j = 0; j < step; j++) {
-const v = data[x * step + j] || 0;
-if (v < min) min = v;
-if (v > max) max = v;
-}
-ctx.moveTo(x, mid + min * mid * 0.85);
-ctx.lineTo(x, mid + max * mid * 0.85);
+let mn = 1, mx = -1;
+for (let j = 0; j < step; j++) { const v = data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+ctx.moveTo(x, mid + mn * mid * 0.85);
+ctx.lineTo(x, mid + mx * mid * 0.85);
 }
 ctx.stroke();
 }
 
 // ── RING ANIMATION ─────────────────────────────────────────
-
-function startRingAnimation() {
-cancelAnimationFrame(state.rafId);
-animateRing();
+function startRingAnim() {
+cancelAnimationFrame(rafId);
+animRing();
 }
 
-function animateRing() {
-if (!state.audioCtx || state.loopDuration === 0) return;
+function animRing() {
+if (!audioCtx || loopDuration === 0) return;
+const elapsed   = (audioCtx.currentTime - loopStartTime) % loopDuration;
+const progress  = elapsed / loopDuration;
+ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - progress);
+cycleTime.textContent = (loopDuration - elapsed).toFixed(1) + ‘s’;
 
-const elapsed = (state.audioCtx.currentTime - state.loopStart) % state.loopDuration;
-const progress = elapsed / state.loopDuration;
-const offset = RING_CIRCUMFERENCE * (1 - progress);
-ringProgress.style.strokeDashoffset = offset;
-
-// Update time display
-const remaining = state.loopDuration - elapsed;
-cycleTime.textContent = remaining.toFixed(1) + ‘s’;
-
-// Update track playheads
-document.querySelectorAll(’.track-playhead’).forEach((ph, i) => {
+document.querySelectorAll(’.track-playhead’).forEach(ph => {
 ph.style.left = (progress * 100) + ‘%’;
 });
 
-state.rafId = requestAnimationFrame(animateRing);
+rafId = requestAnimationFrame(animRing);
 }
 
 // ── UI STATE ───────────────────────────────────────────────
+function setStatus(text, active) {
+statusText.textContent = text;
+}
 
 function updateUI() {
-const hasLoop      = state.loopDuration > 0;
-const hasLayers    = state.tracks.length > 0;
-const isRec        = state.isRecording;
+const hasLoop = loopDuration > 0;
+const isRec   = isRecording;
 
-// Buttons
 btnRecord.disabled = isRec;
-btnRecord.classList.toggle(‘active’, isRec && state.recordingType === ‘first’);
-
+btnRecord.classList.toggle(‘active’, isRec && recType === ‘first’);
 btnLayer.disabled  = !hasLoop || isRec;
-btnLayer.classList.toggle(‘active’, isRec && state.recordingType === ‘layer’);
-
+btnLayer.classList.toggle(‘active’, isRec && recType === ‘layer’);
 btnStop.disabled   = !isRec;
-btnUndo.disabled   = state.tracks.length === 0 || isRec;
-btnClear.disabled  = !hasLayers || isRec;
+btnUndo.disabled   = tracks.length === 0 || isRec;
+btnClear.disabled  = tracks.length === 0 || isRec;
 
-// Status
 if (isRec) {
-statusDot.className = ‘status-dot recording’;
-statusText.textContent = state.recordingType === ‘first’ ? ‘recording loop’ : ‘recording layer’;
+statusDot.className    = ‘status-dot recording’;
+statusText.textContent = recType === ‘first’ ? ‘recording loop…’ : ‘recording layer…’;
 ringProgress.classList.add(‘recording’);
 } else if (hasLoop) {
-statusDot.className = ‘status-dot playing’;
-statusText.textContent = `playing · ${state.tracks.length} layer${state.tracks.length !== 1 ? 's' : ''}`;
+statusDot.className    = ‘status-dot playing’;
+statusText.textContent = `playing · ${tracks.length} layer${tracks.length !== 1 ? 's' : ''}`;
 ringProgress.classList.remove(‘recording’);
-cycleLabel.textContent = state.loopDuration.toFixed(2) + ‘s loop’;
+cycleLabel.textContent = loopDuration.toFixed(2) + ‘s loop’;
 } else {
-statusDot.className = ‘status-dot’;
+statusDot.className    = ‘status-dot’;
 statusText.textContent = ‘ready’;
-ringProgress.classList.remove(‘recording’);
 }
 }
 
-// ── BUTTON HANDLERS ────────────────────────────────────────
-
+// ── BUTTON WIRING ──────────────────────────────────────────
 btnRecord.onclick = () => startRecording(‘first’);
 btnLayer.onclick  = () => startRecording(‘layer’);
-btnStop.onclick   = () => stopRecording();
-btnUndo.onclick   = () => undoLast();
-btnClear.onclick  = () => clearAll();
-
-// ── HELPERS ────────────────────────────────────────────────
-
-function getSupportedMimeType() {
-const types = [
-‘audio/webm;codecs=opus’,
-‘audio/webm’,
-‘audio/ogg;codecs=opus’,
-‘audio/mp4’,
-];
-return types.find(t => MediaRecorder.isTypeSupported(t)) || ‘’;
-}
+btnStop.onclick   = stopRecording;
+btnUndo.onclick   = undoLast;
+btnClear.onclick  = clearAll;
 
 // ── INIT ───────────────────────────────────────────────────
-
-// Set ring initial state
-ringProgress.style.strokeDasharray = RING_CIRCUMFERENCE;
+ringProgress.style.strokeDasharray  = RING_CIRCUMFERENCE;
 ringProgress.style.strokeDashoffset = RING_CIRCUMFERENCE;
-
 updateUI();
-</script>
-
-</body>
-</html>
+</script></body></html>

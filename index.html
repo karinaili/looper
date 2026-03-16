@@ -7,489 +7,339 @@
 <title>LOOPER</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#0f0f0f;color:#ddd;font-family:'SF Mono','Fira Code',monospace;-webkit-font-smoothing:antialiased}
-body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:28px 20px 40px;gap:20px;min-height:100vh}
-
-/* HEADER */
-.header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:400px}
-.logo{font-size:13px;letter-spacing:.4em;color:#555;font-weight:600}
-.bpm-row{display:flex;align-items:center;gap:6px}
-.bpm-val{font-size:20px;font-weight:700;min-width:38px;text-align:center}
-.bpm-lbl{font-size:9px;letter-spacing:.1em;color:#444;text-transform:uppercase}
-.arrow{width:26px;height:26px;border:1px solid #252525;border-radius:4px;background:#161616;color:#666;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s}
-.arrow:hover{border-color:#444;color:#ddd}
-
-/* MSG */
-#msg{font-size:11px;letter-spacing:.1em;color:#555;text-transform:uppercase;text-align:center;min-height:14px}
-
-/* MAIN REC BUTTON */
-.rec-wrap{position:relative;display:flex;align-items:center;justify-content:center}
-#btnRec{
-width:110px;height:110px;border-radius:50%;
-border:2px solid #252525;background:#161616;
-cursor:pointer;transition:all .15s;
-display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-outline:none;
-}
-#btnRec .icon{font-size:28px;color:#e8453c;transition:all .15s}
-#btnRec .lbl{font-size:9px;letter-spacing:.12em;color:#555;text-transform:uppercase}
-#btnRec:hover{border-color:#333;background:#1a1a1a}
-#btnRec.recording{border-color:#e8453c;background:#1a0f0f;animation:glow-red 1s ease-in-out infinite alternate}
-#btnRec.recording .icon{color:#e8453c}
-#btnRec.recording .lbl{color:#e8453c99}
-#btnRec.armed{border-color:#ff8c42;background:#1a140e;animation:glow-org .7s ease-in-out infinite alternate}
-#btnRec.armed .icon{color:#ff8c42;font-size:20px}
-#btnRec.armed .lbl{color:#ff8c4299}
-@keyframes glow-red{from{box-shadow:0 0 0 0 rgba(232,69,60,.3)}to{box-shadow:0 0 0 16px rgba(232,69,60,0)}}
-@keyframes glow-org{from{box-shadow:0 0 0 0 rgba(255,140,66,.3)}to{box-shadow:0 0 0 12px rgba(255,140,66,0)}}
-
-/* PROGRESS BAR */
+html,body{min-height:100%;background:#0f0f0f;color:#ddd;font-family:'SF Mono','Fira Code',monospace;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;align-items:center;padding:24px 20px 48px;gap:18px}
+.logo{font-size:12px;letter-spacing:.4em;color:#444;align-self:flex-start}
+#status{width:100%;max-width:400px;padding:10px 16px;border-radius:5px;border:1px solid #222;background:#141414;font-size:11px;letter-spacing:.08em;color:#555;text-transform:uppercase;text-align:center;min-height:40px;display:flex;align-items:center;justify-content:center;transition:color .2s,border-color .2s}
+#status.s-rec{color:#e8453c;border-color:#e8453c55}
+#status.s-armed{color:#ff8c42;border-color:#ff8c4255}
+#status.s-play{color:#3cdc78;border-color:#3cdc7855}
 .prog-wrap{width:100%;max-width:400px}
 .prog-bg{height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden}
-.prog-fg{height:100%;width:0%;background:#2a6e4a;border-radius:3px;transition:none}
-.prog-fg.rec{background:#e8453c}
-.beat-marks{display:flex;justify-content:space-between;padding:3px 0 0;opacity:.3}
-.beat-dot{width:4px;height:4px;border-radius:50%;background:#333}
-.beat-dot.bar-start{background:#555}
-
-/* BARS selector */
-.bars-row{display:flex;align-items:center;gap:10px}
-.bars-lbl{font-size:9px;letter-spacing:.1em;color:#444;text-transform:uppercase}
-.bar-btn{padding:5px 10px;border:1px solid #252525;border-radius:3px;background:#161616;color:#555;font-family:inherit;font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .1s}
-.bar-btn:hover{border-color:#333;color:#888}
-.bar-btn.active{border-color:#2a6e4a;color:#3cdc78;background:#0d1f17}
-
-/* LAYER BUTTON */
-#btnLayer{
-padding:14px 32px;border:1px solid #ff8c4233;border-radius:6px;
-background:#161616;color:#ff8c42;font-family:inherit;font-size:11px;
-letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .15s;
-}
-#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:#1a140e}
-#btnLayer:disabled{opacity:.2;cursor:not-allowed}
-#btnLayer.armed{border-color:#ff8c42;background:#1a140e;animation:glow-org .7s ease-in-out infinite alternate}
-#btnLayer.recording{border-color:#ff8c42;background:#1a140e;animation:glow-org 1s ease-in-out infinite alternate}
-
-/* TRACKS */
-#tracks{width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px}
-.track{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#141414;border:1px solid #1e1e1e;border-radius:4px;transition:opacity .2s}
-.track.muted{opacity:.25}
-.tnum{font-size:10px;color:#333;min-width:20px;text-align:right}
-.twav{flex:1;height:24px;background:#0a0a0a;border-radius:2px;position:relative;overflow:hidden}
+.prog-fill{height:100%;width:0%;border-radius:3px;background:#1e4a2e;transition:none}
+.prog-fill.is-rec{background:#5c1515}
+.beat-grid{display:flex;height:10px;padding:2px 0 0}
+.beat-cell{flex:1;border-right:1px solid #1e1e1e}
+.beat-cell.bar-line{border-right:1px solid #2a2a2a}
+.beat-cell:last-child{border:none}
+.settings{display:flex;gap:24px;align-items:center;justify-content:center;flex-wrap:wrap}
+.sg{display:flex;flex-direction:column;align-items:center;gap:5px}
+.sg-label{font-size:8px;letter-spacing:.12em;color:#444;text-transform:uppercase}
+.sg-val{font-size:20px;font-weight:700;min-width:40px;text-align:center}
+.sg-row{display:flex;gap:5px;align-items:center}
+.arr{width:28px;height:24px;border:1px solid #222;border-radius:3px;background:#161616;color:#555;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s}
+.arr:hover:not([disabled]){border-color:#444;color:#ddd}
+.arr[disabled]{opacity:.2;cursor:not-allowed}
+.bb{padding:4px 10px;border:1px solid #222;border-radius:3px;background:#161616;color:#444;font-family:inherit;font-size:10px;cursor:pointer;transition:all .1s}
+.bb:hover:not([disabled]){border-color:#333;color:#888}
+.bb.on{border-color:#2a5a3a;color:#3cdc78;background:#0a160e}
+.bb[disabled]{opacity:.2;cursor:not-allowed}
+.btn-grid{width:100%;max-width:400px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gb{padding:18px 12px;border-radius:6px;border:1px solid #252525;background:#141414;color:#777;font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:7px;outline:none}
+.gb .gi{font-size:26px;line-height:1}
+.gb .gl{font-size:9px;letter-spacing:.12em}
+.gb:hover:not([disabled]){background:#1a1a1a;border-color:#333}
+.gb:active:not([disabled]){transform:scale(.96)}
+.gb[disabled]{opacity:.2;cursor:not-allowed}
+#gRec .gi{color:#e8453c}
+#gRec{border-color:#e8453c33}
+#gRec:hover:not([disabled]){border-color:#e8453c88;background:#1a0e0e}
+#gRec.is-on{background:#1f0e0e;border-color:#e8453c;animation:gr 1s ease-in-out infinite alternate}
+@keyframes gr{from{box-shadow:0 0 0 0 rgba(232,69,60,.4)}to{box-shadow:0 0 0 14px rgba(232,69,60,0)}}
+#gLayer .gi{color:#ff8c42}
+#gLayer{border-color:#ff8c4233}
+#gLayer:hover:not([disabled]){border-color:#ff8c4288;background:#1a130a}
+#gLayer.is-armed{background:#1a130a;border-color:#ff8c42;animation:go .6s ease-in-out infinite alternate}
+#gLayer.is-on{background:#1a130a;border-color:#ff8c42;animation:go 1s ease-in-out infinite alternate}
+@keyframes go{from{box-shadow:0 0 0 0 rgba(255,140,66,.4)}to{box-shadow:0 0 0 12px rgba(255,140,66,0)}}
+#gStop .gi{color:#aaa}
+#gStop:hover:not([disabled]){border-color:#888;background:#1a1a1a}
+#gStop.is-on{border-color:#ccc;color:#fff}
+#gClear .gi{color:#555}
+#gClear:hover:not([disabled]){border-color:#555}
+#tracks{width:100%;max-width:400px;display:flex;flex-direction:column;gap:7px}
+.empty{font-size:10px;letter-spacing:.1em;color:#222;text-transform:uppercase;text-align:center;padding:12px 0}
+.track{display:flex;align-items:center;gap:8px;padding:9px 10px;background:#121212;border:1px solid #1e1e1e;border-radius:5px;transition:opacity .2s}
+.track.muted{opacity:.2}
+.tnum{font-size:10px;color:#2a2a2a;min-width:20px;text-align:right;flex-shrink:0}
+.twav{flex:1;height:24px;background:#0a0a0a;border-radius:2px;position:relative;overflow:hidden;min-width:0}
 .twav canvas{display:block;position:absolute;inset:0}
-.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.5;pointer-events:none}
+.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.55;pointer-events:none}
 .track.muted .tph{display:none}
-.tbtn{padding:3px 8px;border:1px solid #1e1e1e;border-radius:3px;background:transparent;color:#333;font-family:inherit;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
-.tbtn:hover{border-color:#333;color:#888}
-.tbtn.on{color:#e8453c;border-color:#e8453c33}
-
-/* BOTTOM ROW */
-.bottom-row{display:flex;gap:8px;width:100%;max-width:400px}
-.util-btn{flex:1;padding:8px;border:1px solid #1e1e1e;border-radius:4px;background:#141414;color:#333;font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .1s}
-.util-btn:hover:not(:disabled){border-color:#333;color:#777}
-.util-btn:disabled{opacity:.15;cursor:not-allowed}
+.tactions{display:flex;gap:5px;flex-shrink:0}
+.tbtn{padding:3px 8px;border:1px solid #1e1e1e;border-radius:3px;background:transparent;color:#2a2a2a;font-family:inherit;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.tbtn:hover{border-color:#333;color:#777}
+.tbtn.muted-on{color:#c0392b;border-color:#c0392b44}
 </style>
-
 </head>
 <body>
-
-<div class="header">
-  <div class="logo">LOOPER</div>
-  <div class="bpm-row">
-    <button class="arrow" id="bpmDn">−</button>
-    <div>
-      <div class="bpm-val" id="bpmVal">120</div>
-      <div class="bpm-lbl">bpm</div>
+<div class="logo">LOOPER</div>
+<div id="status">ready — set bpm and bars, then press rec</div>
+<div class="prog-wrap">
+  <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+  <div class="beat-grid" id="beatGrid"></div>
+</div>
+<div class="settings">
+  <div class="sg">
+    <div class="sg-label">bpm</div>
+    <div class="sg-row">
+      <button class="arr" id="aDn">−</button>
+      <div class="sg-val" id="bpmVal">120</div>
+      <button class="arr" id="aUp">+</button>
     </div>
-    <button class="arrow" id="bpmUp">+</button>
+  </div>
+  <div class="sg">
+    <div class="sg-label">bars</div>
+    <div class="sg-row" id="barBtns">
+      <button class="bb on" data-b="1">1</button>
+      <button class="bb" data-b="2">2</button>
+      <button class="bb" data-b="4">4</button>
+      <button class="bb" data-b="8">8</button>
+    </div>
   </div>
 </div>
-
-<div id="msg">press rec to start</div>
-
-<!-- Big record button -->
-
-<button id="btnRec">
-  <div class="icon">⏺</div>
-  <div class="lbl">rec</div>
-</button>
-
-<!-- Progress bar + beat marks -->
-
-<div class="prog-wrap">
-  <div class="prog-bg"><div class="prog-fg" id="progFg"></div></div>
-  <div class="beat-marks" id="beatMarks"></div>
+<div class="btn-grid">
+  <button class="gb" id="gRec"><div class="gi">⏺</div><div class="gl">rec</div></button>
+  <button class="gb" id="gLayer" disabled><div class="gi">＋</div><div class="gl" id="glLbl">layer</div></button>
+  <button class="gb" id="gStop" disabled><div class="gi">⏹</div><div class="gl">stop</div></button>
+  <button class="gb" id="gClear" disabled><div class="gi">↺</div><div class="gl">clear all</div></button>
 </div>
-
-<!-- Bars selector -->
-
-<div class="bars-row">
-  <div class="bars-lbl">bars:</div>
-  <button class="bar-btn active" data-bars="1">1</button>
-  <button class="bar-btn" data-bars="2">2</button>
-  <button class="bar-btn" data-bars="4">4</button>
-  <button class="bar-btn" data-bars="8">8</button>
-</div>
-
-<!-- Layer button -->
-
-<button id="btnLayer" disabled>+ add layer</button>
-
-<!-- Tracks -->
-
-<div id="tracks"></div>
-
-<!-- Undo / Clear -->
-
-<div class="bottom-row">
-  <button class="util-btn" id="btnUndo" disabled>↩ undo</button>
-  <button class="util-btn" id="btnClear" disabled>✕ clear all</button>
-</div>
-
+<div id="tracks"><div class="empty" id="emp">no layers yet</div></div>
 <script>
-// ════════════════════════════════════
-//  STATE
-// ════════════════════════════════════
-let BPM  = 120;
-let BARS = 1;
-const BEATS_PER_BAR = 4;
+var BPM=120,BARS=1,BPB=4;
+function loopSecs(){return BARS*BPB*(60/BPM);}
+var ctx=null,micSrc=null,spNode=null;
+var loopStart=0,hasLoop=false;
+var tracks=[],raf=null;
+var appState='idle'; // idle|rec-first|playing|armed|rec-layer
+var recBuf=[];
+var armTimers=[];
 
-function barDuration()  { return 60 / BPM; }          // one bar in seconds
-function loopDuration() { return BARS * barDuration(); }
-
-let ctx = null, micSrc = null, spNode = null;
-let loopStart = 0, hasLoop = false;
-let tracks = [], raf = null;
-
-// Recording state: 'idle' | 'rec-first' | 'armed-layer' | 'rec-layer'
-let recState = 'idle';
-let recBuf   = [];   // Float32Array chunks
-let recStart = 0;    // audioCtx.currentTime when rec actually started
-
-// ════════════════════════════════════
-//  AUDIO INIT
-// ════════════════════════════════════
-async function initAudio() {
-  if (ctx) { await ctx.resume(); return true; }
-  try {
-    ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:44100, latencyHint:'interactive' });
-  } catch(e) { showMsg('web audio not supported'); return false; }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
-    });
-    micSrc = ctx.createMediaStreamSource(stream);
-  } catch(e) { showMsg('mic denied — need https + mic permission'); return false; }
-
-  // ScriptProcessor records raw PCM — no encode/decode latency
-  spNode = ctx.createScriptProcessor(256, 1, 1);
-  spNode.onaudioprocess = e => {
-    if (recState === 'rec-first' || recState === 'rec-layer') {
-      recBuf.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-    }
-  };
-  // Connect mic → script → silent output
-  const silent = ctx.createGain(); silent.gain.value = 0;
-  micSrc.connect(spNode); spNode.connect(silent); silent.connect(ctx.destination);
-  await ctx.resume();
-  return true;
-}
-
-// ════════════════════════════════════
-//  RECORD FIRST LOOP
-// ════════════════════════════════════
-async function recFirst() {
-  if (!(await initAudio())) return;
-  recBuf = []; recStart = ctx.currentTime;
-  recState = 'rec-first';
-  updateUI(); showMsg('recording… press ⏺ to stop');
-}
-
-function stopFirst() {
-  recState = 'idle';
-  const raw = buildBuf(recBuf);
-  if (!raw) { updateUI(); return; }
-  // Fit to loop duration
-  const looped = fitBuf(raw, loopDuration());
-  loopStart = ctx.currentTime;
-  hasLoop = true;
-  addTrack(looped);
-  scheduleAll();
-  startAnim();
-  updateUI();
-}
-
-// ════════════════════════════════════
-//  ADD LAYER  (quantized to bar boundary)
-// ════════════════════════════════════
-function armLayer() {
-  if (!hasLoop) return;
-  recState = 'armed-layer';
-  recBuf = [];
-  updateUI(); showMsg('armed — starts at next bar…');
-
-  const now     = ctx.currentTime;
-  const elapsed = (now - loopStart) % loopDuration();
-  const toNext  = loopDuration() - elapsed; // ms to next loop boundary
-
-  // Start recording at next boundary (we start slightly early to not miss samples)
-  const startIn = Math.max(0, toNext - 0.05); // 50ms early
-  setTimeout(() => {
-    recStart = ctx.currentTime + 0.05;
-    recState = 'rec-layer';
-    updateUI(); showMsg('recording layer…');
-  }, startIn * 1000);
-
-  // Auto-stop after one full loop
-  setTimeout(() => {
-    if (recState === 'rec-layer') stopLayer();
-  }, (toNext + loopDuration()) * 1000);
-}
-
-function stopLayer() {
-  recState = 'idle';
-  const raw = buildBuf(recBuf);
-  if (!raw) { updateUI(); return; }
-
-  // Take the last loopDuration() seconds of the captured buffer
-  // (discards the pre-roll we started early)
-  const sr          = ctx.sampleRate;
-  const loopSamples = Math.round(loopDuration() * sr);
-  const from        = Math.max(0, raw.length - loopSamples);
-  const trimmed     = ctx.createBuffer(1, loopSamples, sr);
-  const src         = raw.getChannelData(0);
-  const dst         = trimmed.getChannelData(0);
-  dst.set(src.subarray(from, from + loopSamples));
-
-  addTrack(trimmed);
-  scheduleTrack(tracks[tracks.length-1]);
-  updateUI();
-}
-
-// ════════════════════════════════════
-//  BUFFER HELPERS
-// ════════════════════════════════════
-function buildBuf(chunks) {
-  if (!chunks.length) return null;
-  const total = chunks.reduce((s,c)=>s+c.length, 0);
-  const buf = ctx.createBuffer(1, total, ctx.sampleRate);
-  const dst = buf.getChannelData(0);
-  let off=0; chunks.forEach(c=>{dst.set(c,off);off+=c.length;});
-  return buf;
-}
-
-function fitBuf(buf, dur) {
-  const n = Math.round(dur * ctx.sampleRate);
-  const out = ctx.createBuffer(1, n, ctx.sampleRate);
-  const src = buf.getChannelData(0), dst = out.getChannelData(0);
-  dst.set(src.subarray(0, Math.min(src.length, n)));
-  return out;
-}
-
-// ════════════════════════════════════
-//  TRACK PLAYBACK
-// ════════════════════════════════════
-function addTrack(buf) {
-  const gain = ctx.createGain(); gain.connect(ctx.destination);
-  const t = { id:Date.now(), buf, gain, srcs:[], muted:false, num:tracks.length+1 };
-  tracks.push(t); renderTrack(t); return t;
-}
-
-function scheduleTrack(t) {
-  stopSrcs(t); if(t.muted) return;
-  const now = ctx.currentTime;
-  const pos = (now - loopStart) % loopDuration(); // position in cycle
-  const off = pos % t.buf.duration;               // position in buffer
-  playLoop(t, now, off);
-}
-
-function scheduleAll() { tracks.forEach(scheduleTrack); }
-
-function playLoop(t, when, offset) {
-  const src = ctx.createBufferSource();
-  src.buffer = t.buf;
-  const fg = ctx.createGain(); src.connect(fg); fg.connect(t.gain);
-  const rem  = t.buf.duration - offset;
-  const fade = 0.003;
-  fg.gain.setValueAtTime(0, when);
-  fg.gain.linearRampToValueAtTime(1, when + fade);
-  fg.gain.setValueAtTime(1, when + rem - fade);
-  fg.gain.linearRampToValueAtTime(0, when + rem);
-  src.start(when, offset);
-  src.onended = () => {
-    if (!tracks.find(x=>x.id===t.id) || t.muted) return;
-    playLoop(t, when + rem, 0);
-  };
-  t.srcs.push(src);
-}
-
-function stopSrcs(t) {
-  t.srcs.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}});
-  t.srcs=[];
-}
-
-function muteTrack(id) {
-  const t=tracks.find(x=>x.id===id); if(!t) return;
-  t.muted=!t.muted;
-  if(t.muted){t.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.02);setTimeout(()=>stopSrcs(t),30);}
-  else{t.gain.gain.setValueAtTime(1,ctx.currentTime);scheduleTrack(t);}
-  const el=document.querySelector(`[data-id="${id}"]`);
-  if(el){el.classList.toggle('muted',t.muted);const b=el.querySelector('.mute-btn');if(b){b.textContent=t.muted?'un':'mute';b.classList.toggle('on',t.muted);}}
-}
-
-function delTrack(id) {
-  const t=tracks.find(x=>x.id===id); if(!t) return;
-  stopSrcs(t); t.gain.disconnect(); tracks=tracks.filter(x=>x.id!==id);
-  document.querySelector(`[data-id="${id}"]`)?.remove();
-  tracks.forEach((x,i)=>{x.num=i+1;const n=document.querySelector(`[data-id="${x.id}"] .tnum`);if(n)n.textContent=String(x.num).padStart(2,'0');});
-  updateUI();
-}
-
-function undo() {
-  if(!tracks.length) return;
-  delTrack(tracks[tracks.length-1].id);
-  if(!tracks.length) clearAll();
-  else updateUI();
-}
-
-function clearAll() {
-  tracks.forEach(t=>{stopSrcs(t);t.gain.disconnect();}); tracks=[];
-  hasLoop=false; recState='idle';
-  cancelAnimationFrame(raf); raf=null;
-  document.getElementById('tracks').innerHTML='';
-  document.getElementById('progFg').style.width='0%';
-  updateUI(); showMsg('press rec to start');
-}
-
-// ════════════════════════════════════
-//  TRACK DOM
-// ════════════════════════════════════
-function renderTrack(t) {
-  const el=document.createElement('div');
-  el.className='track'; el.dataset.id=t.id;
-  el.innerHTML=`<div class="tnum">${String(t.num).padStart(2,'0')}</div>
-    <div class="twav"><canvas></canvas><div class="tph"></div></div>
-    <button class="tbtn mute-btn">mute</button>
-    <button class="tbtn del-btn">del</button>`;
-  // waveform
-  const cv=el.querySelector('canvas'),W=200,H=24;
-  cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
-  cv.style.width=W+'px'; cv.style.height=H+'px';
-  const c=cv.getContext('2d'); c.scale(devicePixelRatio,devicePixelRatio);
-  const d=t.buf.getChannelData(0),step=Math.max(1,Math.floor(d.length/W)),mid=H/2;
-  c.strokeStyle='rgba(60,220,120,.5)'; c.lineWidth=1; c.beginPath();
-  for(let x=0;x<W;x++){
-    let mn=1,mx=-1;
-    for(let j=0;j<step;j++){const v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    c.moveTo(x,mid+mn*mid*.8); c.lineTo(x,mid+mx*mid*.8);
-  }
-  c.stroke();
-  el.querySelector('.mute-btn').onclick=()=>muteTrack(t.id);
-  el.querySelector('.del-btn').onclick=()=>delTrack(t.id);
-  document.getElementById('tracks').appendChild(el);
-  el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,fill:'forwards'});
-}
-
-// ════════════════════════════════════
-//  ANIMATION
-// ════════════════════════════════════
-function startAnim() { cancelAnimationFrame(raf); animFrame(); }
-function animFrame() {
-  if(!ctx||!hasLoop){raf=requestAnimationFrame(animFrame);return;}
-  const elapsed=(ctx.currentTime-loopStart)%loopDuration();
-  const prog=elapsed/loopDuration();
-  document.getElementById('progFg').style.width=(prog*100)+'%';
-  document.querySelectorAll('.tph').forEach(p=>p.style.left=(prog*100)+'%');
-  raf=requestAnimationFrame(animFrame);
-}
-
-// beat marks under progress bar
-function buildBeatMarks() {
-  const c=document.getElementById('beatMarks'); c.innerHTML='';
-  const total=BARS*BEATS_PER_BAR;
-  for(let i=0;i<=total;i++){
-    const d=document.createElement('div');
-    d.className='beat-dot'+(i%BEATS_PER_BAR===0?' bar-start':'');
-    c.appendChild(d);
-  }
-}
-
-// ════════════════════════════════════
-//  UI STATE
-// ════════════════════════════════════
-function showMsg(t){document.getElementById('msg').textContent=t;}
-
-function updateUI() {
-  const idle   = recState==='idle';
-  const recF   = recState==='rec-first';
-  const armed  = recState==='armed-layer';
-  const recL   = recState==='rec-layer';
-
-  // Big rec button
-  const br=document.getElementById('btnRec');
-  const icon=br.querySelector('.icon'), lbl=br.querySelector('.lbl');
-  br.className=''; // reset
-  if(recF){ br.classList.add('recording'); icon.textContent='⏹'; lbl.textContent='stop'; }
-  else if(armed){ br.classList.add('armed'); icon.textContent='⏱'; lbl.textContent='wait…'; }
-  else { icon.textContent='⏺'; lbl.textContent='rec'; }
-
-  // Layer button
-  const bl=document.getElementById('btnLayer');
-  bl.disabled=(!hasLoop&&idle)||recF;
-  bl.className=''; // reset
-  if(armed||recL) bl.classList.add(armed?'armed':'recording');
-  bl.textContent=(recL||armed)?'⏹ stop layer':'+ add layer';
-
-  document.getElementById('btnUndo').disabled  = !tracks.length || !idle;
-  document.getElementById('btnClear').disabled = !tracks.length || !idle;
-
-  // progress bar color
-  const pf=document.getElementById('progFg');
-  pf.classList.toggle('rec', recF||recL);
-
-  // BPM & bars buttons only when idle/playing
-  document.getElementById('bpmUp').disabled = !idle||recF||armed||recL;
-  document.getElementById('bpmDn').disabled = !idle||recF||armed||recL;
-  document.querySelectorAll('.bar-btn').forEach(b=>b.disabled=hasLoop||recF);
-
-  if(hasLoop&&idle) showMsg(`playing · ${tracks.length} layer${tracks.length!==1?'s':''} · ${loopDuration().toFixed(2)}s`);
-}
-
-// ════════════════════════════════════
-//  BUTTON WIRING
-// ════════════════════════════════════
-document.getElementById('btnRec').onclick = async () => {
-  if(ctx) ctx.resume();
-  if(recState==='idle')       recFirst();
-  else if(recState==='rec-first') stopFirst();
+async function initAudio(){
+if(ctx){await ctx.resume();return true;}
+try{ctx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:44100,latencyHint:‘interactive’});}
+catch(e){setStatus(‘web audio not supported’,’’);return false;}
+try{
+var stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+micSrc=ctx.createMediaStreamSource(stream);
+}catch(e){setStatus(‘mic denied — open over https:// and allow mic’,’’);return false;}
+spNode=ctx.createScriptProcessor(256,1,1);
+spNode.onaudioprocess=function(e){
+if(appState===‘rec-first’||appState===‘rec-layer’)
+recBuf.push(new Float32Array(e.inputBuffer.getChannelData(0)));
 };
+var sil=ctx.createGain();sil.gain.value=0;
+micSrc.connect(spNode);spNode.connect(sil);sil.connect(ctx.destination);
+await ctx.resume();
+return true;
+}
 
-document.getElementById('btnLayer').onclick = () => {
-  if(recState==='idle'&&hasLoop)       armLayer();
-  else if(recState==='rec-layer'||recState==='armed-layer') stopLayer();
+async function onRec(){
+if(appState!==‘idle’)return;
+if(!(await initAudio()))return;
+recBuf=[];appState=‘rec-first’;
+ui();setStatus(‘recording… press STOP when done’,‘s-rec’);
+}
+
+function onStop(){
+if(appState===‘rec-first’) finishFirst();
+else if(appState===‘rec-layer’) finishLayer();
+else if(appState===‘armed’){cancelArm();appState=‘playing’;ui();setStatus(‘layer cancelled’,‘s-play’);}
+}
+
+function finishFirst(){
+appState=‘playing’;
+var raw=buildBuf(recBuf);
+if(!raw){appState=‘idle’;ui();return;}
+var looped=fitBuf(raw,loopSecs());
+loopStart=ctx.currentTime;hasLoop=true;
+addTrack(looped);scheduleAll();
+ui();setStatus(‘playing · 1 layer — press LAYER to overdub’,‘s-play’);
+}
+
+function onLayer(){
+if(appState!==‘playing’)return;
+appState=‘armed’;recBuf=[];
+ui();setStatus(‘armed — will start at next loop boundary’,‘s-armed’);
+var now=ctx.currentTime;
+var elapsed=(now-loopStart)%loopSecs();
+var toNext=loopSecs()-elapsed;
+var t1=setTimeout(function(){
+if(appState!==‘armed’)return;
+appState=‘rec-layer’;
+ui();setStatus(‘recording layer… press STOP when done’,‘s-rec’);
+},toNext*1000);
+var t2=setTimeout(function(){
+if(appState===‘rec-layer’)finishLayer();
+},(toNext+loopSecs())*1000);
+armTimers=[t1,t2];
+}
+
+function cancelArm(){armTimers.forEach(clearTimeout);armTimers=[];}
+
+function finishLayer(){
+cancelArm();appState=‘playing’;
+if(!recBuf.length){ui();setStatus(‘playing · ‘+tracks.length+’ layers’,‘s-play’);return;}
+var raw=buildBuf(recBuf);if(!raw){ui();return;}
+var sr=ctx.sampleRate;
+var loopSamples=Math.round(loopSecs()*sr);
+var total=raw.length;
+var from=Math.max(0,total-loopSamples);
+var trimmed=ctx.createBuffer(1,loopSamples,sr);
+var src=raw.getChannelData(0),dst=trimmed.getChannelData(0);
+dst.set(src.subarray(from,from+loopSamples));
+addTrack(trimmed);scheduleTrack(tracks[tracks.length-1]);
+ui();setStatus(‘playing · ‘+tracks.length+’ layers’,‘s-play’);
+}
+
+function onClear(){
+cancelArm();
+tracks.forEach(function(t){stopSrcs(t);t.gain.disconnect();});
+tracks=[];hasLoop=false;appState=‘idle’;
+cancelAnimationFrame(raf);raf=null;
+var tEl=document.getElementById(‘tracks’);
+tEl.innerHTML=’’;
+var em=document.createElement(‘div’);em.className=‘empty’;em.id=‘emp’;em.textContent=‘no layers yet’;
+tEl.appendChild(em);
+document.getElementById(‘progFill’).style.width=‘0%’;
+ui();setStatus(‘cleared — ready to record’,’’);
+}
+
+function buildBuf(chunks){
+if(!chunks.length)return null;
+var n=chunks.reduce(function(s,c){return s+c.length;},0);
+var buf=ctx.createBuffer(1,n,ctx.sampleRate);
+var dst=buf.getChannelData(0);var off=0;
+chunks.forEach(function(c){dst.set(c,off);off+=c.length;});
+return buf;
+}
+function fitBuf(buf,dur){
+var n=Math.round(dur*ctx.sampleRate);
+var out=ctx.createBuffer(1,n,ctx.sampleRate);
+var src=buf.getChannelData(0),dst=out.getChannelData(0);
+dst.set(src.subarray(0,Math.min(src.length,n)));
+return out;
+}
+
+function addTrack(buf){
+var gain=ctx.createGain();gain.connect(ctx.destination);
+var t={id:Date.now(),buf:buf,gain:gain,srcs:[],muted:false,num:tracks.length+1};
+tracks.push(t);renderTrack(t);return t;
+}
+function scheduleTrack(t){
+stopSrcs(t);if(t.muted)return;
+var now=ctx.currentTime;
+var elapsed=(now-loopStart)%loopSecs();
+var offset=elapsed%t.buf.duration;
+playLoop(t,now,offset);
+}
+function scheduleAll(){tracks.forEach(scheduleTrack);}
+function playLoop(t,when,offset){
+var src=ctx.createBufferSource();src.buffer=t.buf;
+var fg=ctx.createGain();src.connect(fg);fg.connect(t.gain);
+var rem=t.buf.duration-offset,fade=0.003;
+fg.gain.setValueAtTime(0,when);
+fg.gain.linearRampToValueAtTime(1,when+fade);
+fg.gain.setValueAtTime(1,when+rem-fade);
+fg.gain.linearRampToValueAtTime(0,when+rem);
+src.start(when,offset);
+src.onended=function(){
+if(!tracks.find(function(x){return x.id===t.id;})||t.muted)return;
+playLoop(t,when+rem,0);
 };
+t.srcs.push(src);
+}
+function stopSrcs(t){
+t.srcs.forEach(function(s){try{s.onended=null;s.stop();}catch(e){}});t.srcs=[];
+}
+function muteTrack(id){
+var t=tracks.find(function(x){return x.id===id;});if(!t)return;
+t.muted=!t.muted;
+if(t.muted){t.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.02);setTimeout(function(){stopSrcs(t);},30);}
+else{t.gain.gain.setValueAtTime(1,ctx.currentTime);scheduleTrack(t);}
+var el=document.querySelector(’[data-id=”’+id+’”]’);
+if(el){el.classList.toggle(‘muted’,t.muted);var btn=el.querySelector(’.mute-btn’);if(btn){btn.textContent=t.muted?‘unmute’:‘mute’;btn.classList.toggle(‘muted-on’,t.muted);}}
+}
+function delTrack(id){
+var t=tracks.find(function(x){return x.id===id;});if(!t)return;
+stopSrcs(t);t.gain.disconnect();
+tracks=tracks.filter(function(x){return x.id!==id;});
+var el=document.querySelector(’[data-id=”’+id+’”]’);if(el)el.remove();
+tracks.forEach(function(x,i){x.num=i+1;var n=document.querySelector(’[data-id=”’+x.id+’”] .tnum’);if(n)n.textContent=String(x.num).padStart(2,‘0’);});
+if(!tracks.length){
+var em=document.createElement(‘div’);em.className=‘empty’;em.id=‘emp’;em.textContent=‘no layers yet’;
+document.getElementById(‘tracks’).appendChild(em);
+hasLoop=false;appState=‘idle’;cancelAnimationFrame(raf);raf=null;
+document.getElementById(‘progFill’).style.width=‘0%’;
+}
+ui();if(hasLoop)setStatus(‘playing · ‘+tracks.length+’ layers’,‘s-play’);
+}
 
-document.getElementById('btnUndo').onclick  = undo;
-document.getElementById('btnClear').onclick = clearAll;
+function renderTrack(t){
+var em=document.getElementById(‘emp’);if(em)em.remove();
+var el=document.createElement(‘div’);el.className=‘track’;el.dataset.id=t.id;
+el.innerHTML=’<div class="tnum">’+String(t.num).padStart(2,‘0’)+’</div><div class="twav"><canvas></canvas><div class="tph"></div></div><div class="tactions"><button class="tbtn mute-btn">mute</button><button class="tbtn del-btn">del</button></div>’;
+var cv=el.querySelector(‘canvas’),W=200,H=24;
+cv.width=W*devicePixelRatio;cv.height=H*devicePixelRatio;cv.style.width=W+‘px’;cv.style.height=H+‘px’;
+var c=cv.getContext(‘2d’);c.scale(devicePixelRatio,devicePixelRatio);
+var d=t.buf.getChannelData(0),step=Math.max(1,Math.floor(d.length/W)),mid=H/2;
+c.strokeStyle=‘rgba(60,220,120,.55)’;c.lineWidth=1;c.beginPath();
+for(var x=0;x<W;x++){var mn=1,mx=-1;for(var j=0;j<step;j++){var v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}c.moveTo(x,mid+mn*mid*.8);c.lineTo(x,mid+mx*mid*.8);}
+c.stroke();
+el.querySelector(’.mute-btn’).onclick=function(){muteTrack(t.id);};
+el.querySelector(’.del-btn’).onclick=function(){delTrack(t.id);};
+document.getElementById(‘tracks’).appendChild(el);
+}
 
-document.getElementById('bpmUp').onclick = ()=>{BPM=Math.min(240,BPM+1);document.getElementById('bpmVal').textContent=BPM;};
-document.getElementById('bpmDn').onclick = ()=>{BPM=Math.max(40,BPM-1);document.getElementById('bpmVal').textContent=BPM;};
+function startAnim(){cancelAnimationFrame(raf);animFrame();}
+function animFrame(){
+if(ctx&&hasLoop){
+var prog=(ctx.currentTime-loopStart)%loopSecs()/loopSecs();
+document.getElementById(‘progFill’).style.width=(prog*100)+’%’;
+document.querySelectorAll(’.tph’).forEach(function(p){p.style.left=(prog*100)+’%’;});
+}
+raf=requestAnimationFrame(animFrame);
+}
 
-document.querySelectorAll('.bar-btn').forEach(b=>{
-  b.onclick=()=>{
-    if(hasLoop) return; // can't change after first loop
-    BARS=parseInt(b.dataset.bars);
-    document.querySelectorAll('.bar-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    buildBeatMarks();
-  };
+function buildBeatGrid(){
+var grid=document.getElementById(‘beatGrid’);grid.innerHTML=’’;
+var total=BARS*BPB;
+for(var i=0;i<total;i++){
+var cell=document.createElement(‘div’);
+cell.className=‘beat-cell’+((i+1)%BPB===0&&i<total-1?’ bar-line’:’’);
+grid.appendChild(cell);
+}
+}
+
+function setStatus(text,cls){var el=document.getElementById(‘status’);el.textContent=text;el.className=cls||’’;}
+
+function ui(){
+var idle=appState===‘idle’,recF=appState===‘rec-first’,play=appState===‘playing’;
+var armed=appState===‘armed’,recL=appState===‘rec-layer’;
+var isRec=recF||recL,locked=isRec||armed;
+var gR=document.getElementById(‘gRec’),gL=document.getElementById(‘gLayer’);
+var gS=document.getElementById(‘gStop’),gC=document.getElementById(‘gClear’);
+gR.disabled=!idle;gR.className=‘gb’+(recF?’ is-on’:’’);
+gL.disabled=!play;gL.className=‘gb’+(armed?’ is-armed’:recL?’ is-on’:’’);
+document.getElementById(‘glLbl’).textContent=recL?‘recording…’:armed?‘armed…’:‘layer’;
+gS.disabled=!(isRec||armed);gS.className=‘gb’+(isRec||armed?’ is-on’:’’);
+gC.disabled=!hasLoop||locked;
+document.getElementById(‘progFill’).classList.toggle(‘is-rec’,isRec);
+document.getElementById(‘aDn’).disabled=locked||hasLoop;
+document.getElementById(‘aUp’).disabled=locked||hasLoop;
+document.querySelectorAll(’.bb’).forEach(function(b){b.disabled=locked||hasLoop;});
+}
+
+document.getElementById(‘gRec’).onclick=onRec;
+document.getElementById(‘gLayer’).onclick=onLayer;
+document.getElementById(‘gStop’).onclick=onStop;
+document.getElementById(‘gClear’).onclick=onClear;
+document.getElementById(‘aDn’).onclick=function(){BPM=Math.max(40,BPM-1);document.getElementById(‘bpmVal’).textContent=BPM;};
+document.getElementById(‘aUp’).onclick=function(){BPM=Math.min(240,BPM+1);document.getElementById(‘bpmVal’).textContent=BPM;};
+document.querySelectorAll(’.bb’).forEach(function(b){
+b.onclick=function(){if(hasLoop)return;BARS=parseInt(b.dataset.b);document.querySelectorAll(’.bb’).forEach(function(x){x.classList.remove(‘on’);});b.classList.add(‘on’);buildBeatGrid();};
 });
-
-// ── INIT ──
-buildBeatMarks();
-startAnim(); // start animation loop so it's ready
-updateUI();
+buildBeatGrid();startAnim();ui();
 </script>
 
 </body>

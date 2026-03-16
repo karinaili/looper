@@ -7,573 +7,489 @@
 <title>LOOPER</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#111;color:#e0e0e0;font-family:'SF Mono','Fira Code',monospace;-webkit-font-smoothing:antialiased}
-body{display:flex;flex-direction:column;align-items:center;padding:32px 20px;gap:24px}
+html,body{height:100%;background:#0f0f0f;color:#ddd;font-family:'SF Mono','Fira Code',monospace;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:28px 20px 40px;gap:20px;min-height:100vh}
 
-h1{font-size:15px;letter-spacing:.4em;font-weight:600;color:#888}
-#msg{font-size:11px;letter-spacing:.1em;color:#555;text-transform:uppercase;min-height:14px;text-align:center}
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:400px}
+.logo{font-size:13px;letter-spacing:.4em;color:#555;font-weight:600}
+.bpm-row{display:flex;align-items:center;gap:6px}
+.bpm-val{font-size:20px;font-weight:700;min-width:38px;text-align:center}
+.bpm-lbl{font-size:9px;letter-spacing:.1em;color:#444;text-transform:uppercase}
+.arrow{width:26px;height:26px;border:1px solid #252525;border-radius:4px;background:#161616;color:#666;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s}
+.arrow:hover{border-color:#444;color:#ddd}
 
-/* BIG RECORD BUTTON */
+/* MSG */
+#msg{font-size:11px;letter-spacing:.1em;color:#555;text-transform:uppercase;text-align:center;min-height:14px}
+
+/* MAIN REC BUTTON */
+.rec-wrap{position:relative;display:flex;align-items:center;justify-content:center}
 #btnRec{
-width:96px;height:96px;border-radius:50%;
-border:2px solid #333;background:#1a1a1a;
-font-size:32px;cursor:pointer;transition:all .12s;
-display:flex;align-items:center;justify-content:center;
-color:#e8453c;position:relative;
+width:110px;height:110px;border-radius:50%;
+border:2px solid #252525;background:#161616;
+cursor:pointer;transition:all .15s;
+display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+outline:none;
 }
-#btnRec:hover{border-color:#e8453c;background:#1f1212}
-#btnRec.armed{border-color:#ff8c42;color:#ff8c42;animation:blink .5s ease-in-out infinite alternate}
-#btnRec.recording{border-color:#e8453c;background:#1f1212;box-shadow:0 0 0 0 rgba(232,69,60,.4);animation:ripple 1s ease-out infinite}
-@keyframes blink{from{opacity:1}to{opacity:.3}}
-@keyframes ripple{0%{box-shadow:0 0 0 0 rgba(232,69,60,.5)}100%{box-shadow:0 0 0 20px rgba(232,69,60,0)}}
+#btnRec .icon{font-size:28px;color:#e8453c;transition:all .15s}
+#btnRec .lbl{font-size:9px;letter-spacing:.12em;color:#555;text-transform:uppercase}
+#btnRec:hover{border-color:#333;background:#1a1a1a}
+#btnRec.recording{border-color:#e8453c;background:#1a0f0f;animation:glow-red 1s ease-in-out infinite alternate}
+#btnRec.recording .icon{color:#e8453c}
+#btnRec.recording .lbl{color:#e8453c99}
+#btnRec.armed{border-color:#ff8c42;background:#1a140e;animation:glow-org .7s ease-in-out infinite alternate}
+#btnRec.armed .icon{color:#ff8c42;font-size:20px}
+#btnRec.armed .lbl{color:#ff8c4299}
+@keyframes glow-red{from{box-shadow:0 0 0 0 rgba(232,69,60,.3)}to{box-shadow:0 0 0 16px rgba(232,69,60,0)}}
+@keyframes glow-org{from{box-shadow:0 0 0 0 rgba(255,140,66,.3)}to{box-shadow:0 0 0 12px rgba(255,140,66,0)}}
 
-/* RING */
-.ring-wrap{position:relative;width:200px;height:200px}
-svg{width:100%;height:100%;transform:rotate(-90deg)}
-.rbg{fill:none;stroke:#1e1e1e;stroke-width:4}
-.rfg{fill:none;stroke:#2a6e4a;stroke-width:4;stroke-linecap:round;stroke-dasharray:534;stroke-dashoffset:534;transition:stroke .2s}
-.rfg.rec{stroke:#e8453c}
-.rfg.go{stroke:#3cdc78}
-.ring-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-.rt{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.rl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#444}
+/* PROGRESS BAR */
+.prog-wrap{width:100%;max-width:400px}
+.prog-bg{height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden}
+.prog-fg{height:100%;width:0%;background:#2a6e4a;border-radius:3px;transition:none}
+.prog-fg.rec{background:#e8453c}
+.beat-marks{display:flex;justify-content:space-between;padding:3px 0 0;opacity:.3}
+.beat-dot{width:4px;height:4px;border-radius:50%;background:#333}
+.beat-dot.bar-start{background:#555}
 
-/* BAR showing beat grid */
-#beatBar{width:100%;max-width:420px;height:28px;background:#1a1a1a;border-radius:4px;position:relative;overflow:hidden}
-.beat-tick{position:absolute;top:0;bottom:0;width:1px;background:#2a2a2a}
-.beat-tick.bar{background:#333}
-#playhead{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.8;transition:none}
+/* BARS selector */
+.bars-row{display:flex;align-items:center;gap:10px}
+.bars-lbl{font-size:9px;letter-spacing:.1em;color:#444;text-transform:uppercase}
+.bar-btn{padding:5px 10px;border:1px solid #252525;border-radius:3px;background:#161616;color:#555;font-family:inherit;font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .1s}
+.bar-btn:hover{border-color:#333;color:#888}
+.bar-btn.active{border-color:#2a6e4a;color:#3cdc78;background:#0d1f17}
 
-/* TEMPO & BEATS */
-.config{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
-.cfg-group{display:flex;flex-direction:column;align-items:center;gap:4px}
-.cfg-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#444}
-.cfg-val{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
-.cfg-btns{display:flex;gap:4px}
-.cfg-btn{width:28px;height:22px;border:1px solid #2a2a2a;border-radius:3px;background:#161616;color:#888;font-family:inherit;font-size:12px;cursor:pointer;transition:all .1s}
-.cfg-btn:hover{border-color:#444;color:#e0e0e0}
-
-/* CONTROLS */
-.ctrl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-button.action{padding:10px 20px;border:1px solid #2a2a2a;border-radius:4px;background:#161616;color:#888;font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .12s;min-width:80px}
-button.action:hover:not(:disabled){border-color:#444;background:#1c1c1c;color:#e0e0e0}
-button.action:disabled{opacity:.2;cursor:not-allowed}
-button.action:active:not(:disabled){transform:scale(.95)}
-#btnLayer{color:#ff8c42;border-color:rgba(255,140,66,.3)}
-#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.06)}
-#btnLayer.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.1);animation:blink .5s ease-in-out infinite alternate}
+/* LAYER BUTTON */
+#btnLayer{
+padding:14px 32px;border:1px solid #ff8c4233;border-radius:6px;
+background:#161616;color:#ff8c42;font-family:inherit;font-size:11px;
+letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .15s;
+}
+#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:#1a140e}
+#btnLayer:disabled{opacity:.2;cursor:not-allowed}
+#btnLayer.armed{border-color:#ff8c42;background:#1a140e;animation:glow-org .7s ease-in-out infinite alternate}
+#btnLayer.recording{border-color:#ff8c42;background:#1a140e;animation:glow-org 1s ease-in-out infinite alternate}
 
 /* TRACKS */
-#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:6px}
-.empty{font-size:10px;letter-spacing:.1em;color:#2a2a2a;text-transform:uppercase;text-align:center;padding:20px 0}
-.track{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#161616;border:1px solid #222;border-radius:4px}
-.track.muted{opacity:.3}
-.tnum{font-size:10px;color:#333;min-width:18px}
-.twav{flex:1;height:22px;background:#111;border-radius:2px;position:relative;overflow:hidden}
-.twav canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
-.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.6}
+#tracks{width:100%;max-width:400px;display:flex;flex-direction:column;gap:6px}
+.track{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#141414;border:1px solid #1e1e1e;border-radius:4px;transition:opacity .2s}
+.track.muted{opacity:.25}
+.tnum{font-size:10px;color:#333;min-width:20px;text-align:right}
+.twav{flex:1;height:24px;background:#0a0a0a;border-radius:2px;position:relative;overflow:hidden}
+.twav canvas{display:block;position:absolute;inset:0}
+.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.5;pointer-events:none}
 .track.muted .tph{display:none}
-.tbtn{padding:3px 8px;border:1px solid #222;border-radius:3px;background:transparent;color:#333;font-family:inherit;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
-.tbtn:hover{border-color:#444;color:#888}
-.tbtn.on{border-color:#e8453c55;color:#e8453c}
+.tbtn{padding:3px 8px;border:1px solid #1e1e1e;border-radius:3px;background:transparent;color:#333;font-family:inherit;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.tbtn:hover{border-color:#333;color:#888}
+.tbtn.on{color:#e8453c;border-color:#e8453c33}
+
+/* BOTTOM ROW */
+.bottom-row{display:flex;gap:8px;width:100%;max-width:400px}
+.util-btn{flex:1;padding:8px;border:1px solid #1e1e1e;border-radius:4px;background:#141414;color:#333;font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.util-btn:hover:not(:disabled){border-color:#333;color:#777}
+.util-btn:disabled{opacity:.15;cursor:not-allowed}
 </style>
 
 </head>
 <body>
-<h1>LOOPER</h1>
-<div id="msg">set tempo & beats, then record</div>
 
-<!-- Tempo / Beats config -->
-
-<div class="config">
-  <div class="cfg-group">
-    <div class="cfg-label">bpm</div>
-    <div class="cfg-val" id="bpmVal">120</div>
-    <div class="cfg-btns">
-      <button class="cfg-btn" id="bpmDn">−</button>
-      <button class="cfg-btn" id="bpmUp">+</button>
+<div class="header">
+  <div class="logo">LOOPER</div>
+  <div class="bpm-row">
+    <button class="arrow" id="bpmDn">−</button>
+    <div>
+      <div class="bpm-val" id="bpmVal">120</div>
+      <div class="bpm-lbl">bpm</div>
     </div>
-  </div>
-  <div class="cfg-group">
-    <div class="cfg-label">bars</div>
-    <div class="cfg-val" id="barsVal">2</div>
-    <div class="cfg-btns">
-      <button class="cfg-btn" id="barsDn">−</button>
-      <button class="cfg-btn" id="barsUp">+</button>
-    </div>
-  </div>
-  <div class="cfg-group">
-    <div class="cfg-label">beats/bar</div>
-    <div class="cfg-val" id="beatsVal">4</div>
-    <div class="cfg-btns">
-      <button class="cfg-btn" id="beatsDn">−</button>
-      <button class="cfg-btn" id="beatsUp">+</button>
-    </div>
+    <button class="arrow" id="bpmUp">+</button>
   </div>
 </div>
 
-<!-- Ring -->
+<div id="msg">press rec to start</div>
 
-<div class="ring-wrap">
-  <svg viewBox="0 0 180 180">
-    <circle class="rbg" cx="90" cy="90" r="85"/>
-    <circle class="rfg" id="rfg" cx="90" cy="90" r="85"/>
-  </svg>
-  <div class="ring-in">
-    <button id="btnRec">⏺</button>
-    <div class="rt" id="rtime">--</div>
-    <div class="rl" id="rlbl">ready</div>
-  </div>
+<!-- Big record button -->
+
+<button id="btnRec">
+  <div class="icon">⏺</div>
+  <div class="lbl">rec</div>
+</button>
+
+<!-- Progress bar + beat marks -->
+
+<div class="prog-wrap">
+  <div class="prog-bg"><div class="prog-fg" id="progFg"></div></div>
+  <div class="beat-marks" id="beatMarks"></div>
 </div>
 
-<!-- Beat bar -->
+<!-- Bars selector -->
 
-<div id="beatBar"><div id="playhead"></div></div>
-
-<!-- Layer + utility -->
-
-<div class="ctrl">
-  <button class="action" id="btnLayer" disabled>+ layer</button>
-  <button class="action" id="btnUndo" disabled>↩ undo</button>
-  <button class="action" id="btnClear" disabled>✕ clear</button>
+<div class="bars-row">
+  <div class="bars-lbl">bars:</div>
+  <button class="bar-btn active" data-bars="1">1</button>
+  <button class="bar-btn" data-bars="2">2</button>
+  <button class="bar-btn" data-bars="4">4</button>
+  <button class="bar-btn" data-bars="8">8</button>
 </div>
+
+<!-- Layer button -->
+
+<button id="btnLayer" disabled>+ add layer</button>
 
 <!-- Tracks -->
 
-<div id="tracks"><div class="empty" id="emptyMsg">no layers yet</div></div>
+<div id="tracks"></div>
+
+<!-- Undo / Clear -->
+
+<div class="bottom-row">
+  <button class="util-btn" id="btnUndo" disabled>↩ undo</button>
+  <button class="util-btn" id="btnClear" disabled>✕ clear all</button>
+</div>
 
 <script>
-// ════════════════════════════════════════════════════════
-//  LOOPER — PCM recording via ScriptProcessorNode
-//  No MediaRecorder. Samples captured directly from AudioContext.
-//  Loop length = bars × beats/bar × (60/bpm) seconds
-//  All layers share the same loopStart anchor.
-//  Layers are "armed" and start/stop exactly on bar boundaries.
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+let BPM  = 120;
+let BARS = 1;
+const BEATS_PER_BAR = 4;
 
-// ── CONFIG ───────────────────────────────────────
-let BPM   = 120;
-let BARS  = 2;
-let BEATS = 4;   // beats per bar
+function barDuration()  { return 60 / BPM; }          // one bar in seconds
+function loopDuration() { return BARS * barDuration(); }
 
-function loopDuration() { return BARS * BEATS * (60 / BPM); }
+let ctx = null, micSrc = null, spNode = null;
+let loopStart = 0, hasLoop = false;
+let tracks = [], raf = null;
 
-// ── AUDIO ────────────────────────────────────────
-let ctx = null, micSource = null, scriptNode = null;
-let recording = false;
-let recBuffer = [];      // Float32Array chunks during recording
-let recStartTime = 0;    // audioCtx.currentTime when recording started
+// Recording state: 'idle' | 'rec-first' | 'armed-layer' | 'rec-layer'
+let recState = 'idle';
+let recBuf   = [];   // Float32Array chunks
+let recStart = 0;    // audioCtx.currentTime when rec actually started
 
-let loopStart = 0;       // audioCtx.currentTime of loop epoch
-let hasLoop   = false;
-let tracks    = [];
-let raf       = null;
-
-// Armed state: we queue a layer record to start at next loop boundary
-let layerArmed = false;
-let layerArmScheduled = false; // setTimeout has been set
-
-// ── INIT MIC ─────────────────────────────────────
+// ════════════════════════════════════
+//  AUDIO INIT
+// ════════════════════════════════════
 async function initAudio() {
-  if (ctx) return true;
-  ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'interactive' });
+  if (ctx) { await ctx.resume(); return true; }
+  try {
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate:44100, latencyHint:'interactive' });
+  } catch(e) { showMsg('web audio not supported'); return false; }
+
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
     });
-    micSource = ctx.createMediaStreamSource(stream);
-  } catch(e) {
-    msg('mic denied — need https:// and mic permission');
-    return false;
-  }
+    micSrc = ctx.createMediaStreamSource(stream);
+  } catch(e) { showMsg('mic denied — need https + mic permission'); return false; }
 
-  // ScriptProcessor: captures raw PCM from mic into recBuffer
-  // Buffer size 256 = ~5.8ms at 44100Hz — fine granularity
-  scriptNode = ctx.createScriptProcessor(256, 1, 1);
-  scriptNode.onaudioprocess = (e) => {
-    if (!recording) return;
-    // Copy input samples (mono)
-    const chunk = new Float32Array(e.inputBuffer.getChannelData(0));
-    recBuffer.push(chunk);
+  // ScriptProcessor records raw PCM — no encode/decode latency
+  spNode = ctx.createScriptProcessor(256, 1, 1);
+  spNode.onaudioprocess = e => {
+    if (recState === 'rec-first' || recState === 'rec-layer') {
+      recBuf.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    }
   };
-
-  micSource.connect(scriptNode);
-  scriptNode.connect(ctx.destination); // must connect to stay active (muted)
-  // Mute script output so we don't hear our own mic
-  const muteGain = ctx.createGain();
-  muteGain.gain.value = 0;
-  scriptNode.disconnect();
-  micSource.connect(scriptNode);
-  scriptNode.connect(muteGain);
-  muteGain.connect(ctx.destination);
-
+  // Connect mic → script → silent output
+  const silent = ctx.createGain(); silent.gain.value = 0;
+  micSrc.connect(spNode); spNode.connect(silent); silent.connect(ctx.destination);
   await ctx.resume();
   return true;
 }
 
-// ── RECORD FIRST LOOP ─────────────────────────────
-async function recordFirst() {
+// ════════════════════════════════════
+//  RECORD FIRST LOOP
+// ════════════════════════════════════
+async function recFirst() {
   if (!(await initAudio())) return;
-  recording = true;
-  recBuffer = [];
-  recStartTime = ctx.currentTime;
-  setState('recording-first');
+  recBuf = []; recStart = ctx.currentTime;
+  recState = 'rec-first';
+  updateUI(); showMsg('recording… press ⏺ to stop');
 }
 
 function stopFirst() {
-  if (!recording) return;
-  recording = false;
-
-  // Build AudioBuffer from captured PCM
-  const buf = buildBuffer(recBuffer);
-  if (!buf || buf.length === 0) { setState('idle'); return; }
-
-  // Quantize: trim/extend to exact loop length
-  const dur = loopDuration();
-  const quantized = quantizeBuffer(buf, dur);
-
+  recState = 'idle';
+  const raw = buildBuf(recBuf);
+  if (!raw) { updateUI(); return; }
+  // Fit to loop duration
+  const looped = fitBuf(raw, loopDuration());
   loopStart = ctx.currentTime;
-  hasLoop   = true;
-
-  addTrack(quantized);
+  hasLoop = true;
+  addTrack(looped);
   scheduleAll();
   startAnim();
-  setState('playing');
+  updateUI();
 }
 
-// ── ARM LAYER ─────────────────────────────────────
+// ════════════════════════════════════
+//  ADD LAYER  (quantized to bar boundary)
+// ════════════════════════════════════
 function armLayer() {
-  if (!hasLoop || layerArmed) return;
-  layerArmed = true;
-  setState('armed-layer');
+  if (!hasLoop) return;
+  recState = 'armed-layer';
+  recBuf = [];
+  updateUI(); showMsg('armed — starts at next bar…');
 
-  // Calculate ms until next loop boundary
   const now     = ctx.currentTime;
   const elapsed = (now - loopStart) % loopDuration();
-  const toNext  = (loopDuration() - elapsed) * 1000; // ms
+  const toNext  = loopDuration() - elapsed; // ms to next loop boundary
 
-  // Start recording slightly BEFORE the boundary so we don't miss any samples
-  // We'll trim precisely after
-  const preRoll = Math.min(100, toNext); // 100ms pre-roll max
-  setTimeout(() => startLayerRecord(), toNext - preRoll);
-
-  // Mark exact boundary time for trimming
-  const boundaryTime = now + (loopDuration() - elapsed);
+  // Start recording at next boundary (we start slightly early to not miss samples)
+  const startIn = Math.max(0, toNext - 0.05); // 50ms early
   setTimeout(() => {
-    if (recording) {
-      // Layer recording already started — mark the exact start time
-      recStartTime = boundaryTime;
-    }
-  }, toNext - preRoll);
+    recStart = ctx.currentTime + 0.05;
+    recState = 'rec-layer';
+    updateUI(); showMsg('recording layer…');
+  }, startIn * 1000);
 
-  // Auto stop at next boundary after one full loop
-  setTimeout(() => { if (recording) stopLayer(); }, toNext + loopDuration() * 1000);
-}
-
-function startLayerRecord() {
-  recBuffer = [];
-  recStartTime = ctx.currentTime + (100/1000); // will be corrected at boundary
-  recording = true;
-  setState('recording-layer');
+  // Auto-stop after one full loop
+  setTimeout(() => {
+    if (recState === 'rec-layer') stopLayer();
+  }, (toNext + loopDuration()) * 1000);
 }
 
 function stopLayer() {
-  if (!recording) return;
-  recording = false;
-  layerArmed = false;
+  recState = 'idle';
+  const raw = buildBuf(recBuf);
+  if (!raw) { updateUI(); return; }
 
-  const rawBuf = buildBuffer(recBuffer);
-  if (!rawBuf) { setState('playing'); return; }
-
-  // Trim: find sample offset from recStartTime to recStartTime+loopDuration
-  const dur         = loopDuration();
+  // Take the last loopDuration() seconds of the captured buffer
+  // (discards the pre-roll we started early)
   const sr          = ctx.sampleRate;
-  const startOffset = Math.round((recStartTime - (ctx.currentTime - rawBuf.duration)) * sr);
-  // simpler: just take last loopDuration seconds of the buffer
-  const loopSamples = Math.round(dur * sr);
-  const totalSamples= rawBuf.length;
-  const from        = Math.max(0, totalSamples - loopSamples);
-
-  const trimmed = ctx.createBuffer(1, loopSamples, sr);
-  const src     = rawBuf.getChannelData(0);
-  const dst     = trimmed.getChannelData(0);
-  const copyLen = Math.min(loopSamples, totalSamples - from);
-  dst.set(src.subarray(from, from + copyLen));
+  const loopSamples = Math.round(loopDuration() * sr);
+  const from        = Math.max(0, raw.length - loopSamples);
+  const trimmed     = ctx.createBuffer(1, loopSamples, sr);
+  const src         = raw.getChannelData(0);
+  const dst         = trimmed.getChannelData(0);
+  dst.set(src.subarray(from, from + loopSamples));
 
   addTrack(trimmed);
-  scheduleTrack(tracks[tracks.length - 1]);
-  setState('playing');
+  scheduleTrack(tracks[tracks.length-1]);
+  updateUI();
 }
 
-// ── BUFFER HELPERS ────────────────────────────────
-function buildBuffer(chunks) {
+// ════════════════════════════════════
+//  BUFFER HELPERS
+// ════════════════════════════════════
+function buildBuf(chunks) {
   if (!chunks.length) return null;
-  const total = chunks.reduce((s, c) => s + c.length, 0);
-  const buf   = ctx.createBuffer(1, total, ctx.sampleRate);
-  const dst   = buf.getChannelData(0);
-  let off = 0;
-  chunks.forEach(c => { dst.set(c, off); off += c.length; });
+  const total = chunks.reduce((s,c)=>s+c.length, 0);
+  const buf = ctx.createBuffer(1, total, ctx.sampleRate);
+  const dst = buf.getChannelData(0);
+  let off=0; chunks.forEach(c=>{dst.set(c,off);off+=c.length;});
   return buf;
 }
 
-// Pad or trim buffer to exact duration
-function quantizeBuffer(buf, dur) {
-  const sr      = ctx.sampleRate;
-  const target  = Math.round(dur * sr);
-  const out     = ctx.createBuffer(1, target, sr);
-  const src     = buf.getChannelData(0);
-  const dst     = out.getChannelData(0);
-  dst.set(src.subarray(0, Math.min(src.length, target)));
+function fitBuf(buf, dur) {
+  const n = Math.round(dur * ctx.sampleRate);
+  const out = ctx.createBuffer(1, n, ctx.sampleRate);
+  const src = buf.getChannelData(0), dst = out.getChannelData(0);
+  dst.set(src.subarray(0, Math.min(src.length, n)));
   return out;
 }
 
-// ── TRACK SCHEDULING ──────────────────────────────
+// ════════════════════════════════════
+//  TRACK PLAYBACK
+// ════════════════════════════════════
 function addTrack(buf) {
-  const gain = ctx.createGain();
-  gain.connect(ctx.destination);
-  const t = { id: Date.now(), buf, gain, srcs:[], muted:false, num:tracks.length+1 };
-  tracks.push(t);
-  renderTrack(t);
-  return t;
+  const gain = ctx.createGain(); gain.connect(ctx.destination);
+  const t = { id:Date.now(), buf, gain, srcs:[], muted:false, num:tracks.length+1 };
+  tracks.push(t); renderTrack(t); return t;
 }
 
 function scheduleTrack(t) {
-  stopSrcs(t);
-  if (t.muted) return;
-  const now     = ctx.currentTime;
-  const elapsed = (now - loopStart) % loopDuration();
-  // offset into the buffer = where we are in the cycle
-  const offset  = elapsed % t.buf.duration;
-  playLoop(t, now, offset);
+  stopSrcs(t); if(t.muted) return;
+  const now = ctx.currentTime;
+  const pos = (now - loopStart) % loopDuration(); // position in cycle
+  const off = pos % t.buf.duration;               // position in buffer
+  playLoop(t, now, off);
 }
 
 function scheduleAll() { tracks.forEach(scheduleTrack); }
 
 function playLoop(t, when, offset) {
-  const src      = ctx.createBufferSource();
-  src.buffer     = t.buf;
-  const fadeGain = ctx.createGain();
-  src.connect(fadeGain);
-  fadeGain.connect(t.gain);
-
-  const dur  = t.buf.duration;
-  const rem  = dur - offset;
-  const fade = 0.003; // 3ms crossfade
-
-  fadeGain.gain.setValueAtTime(0, when);
-  fadeGain.gain.linearRampToValueAtTime(1, when + fade);
-  fadeGain.gain.setValueAtTime(1, when + rem - fade);
-  fadeGain.gain.linearRampToValueAtTime(0, when + rem);
-
+  const src = ctx.createBufferSource();
+  src.buffer = t.buf;
+  const fg = ctx.createGain(); src.connect(fg); fg.connect(t.gain);
+  const rem  = t.buf.duration - offset;
+  const fade = 0.003;
+  fg.gain.setValueAtTime(0, when);
+  fg.gain.linearRampToValueAtTime(1, when + fade);
+  fg.gain.setValueAtTime(1, when + rem - fade);
+  fg.gain.linearRampToValueAtTime(0, when + rem);
   src.start(when, offset);
   src.onended = () => {
-    if (!tracks.find(x => x.id === t.id) || t.muted) return;
+    if (!tracks.find(x=>x.id===t.id) || t.muted) return;
     playLoop(t, when + rem, 0);
   };
   t.srcs.push(src);
 }
 
 function stopSrcs(t) {
-  t.srcs.forEach(s => { try { s.onended=null; s.stop(); } catch(e){} });
-  t.srcs = [];
+  t.srcs.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}});
+  t.srcs=[];
 }
 
 function muteTrack(id) {
-  const t = tracks.find(x => x.id===id); if(!t) return;
-  t.muted = !t.muted;
-  if (t.muted) {
-    t.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.02);
-    setTimeout(() => stopSrcs(t), 30);
-  } else {
-    t.gain.gain.setValueAtTime(1, ctx.currentTime);
-    scheduleTrack(t);
-  }
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if (el) {
-    el.classList.toggle('muted', t.muted);
-    const btn = el.querySelector('.mute-btn');
-    if (btn) { btn.textContent = t.muted?'unmute':'mute'; btn.classList.toggle('on', t.muted); }
-  }
+  const t=tracks.find(x=>x.id===id); if(!t) return;
+  t.muted=!t.muted;
+  if(t.muted){t.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.02);setTimeout(()=>stopSrcs(t),30);}
+  else{t.gain.gain.setValueAtTime(1,ctx.currentTime);scheduleTrack(t);}
+  const el=document.querySelector(`[data-id="${id}"]`);
+  if(el){el.classList.toggle('muted',t.muted);const b=el.querySelector('.mute-btn');if(b){b.textContent=t.muted?'un':'mute';b.classList.toggle('on',t.muted);}}
 }
 
 function delTrack(id) {
-  const t = tracks.find(x => x.id===id); if(!t) return;
-  stopSrcs(t); t.gain.disconnect();
-  tracks = tracks.filter(x => x.id!==id);
+  const t=tracks.find(x=>x.id===id); if(!t) return;
+  stopSrcs(t); t.gain.disconnect(); tracks=tracks.filter(x=>x.id!==id);
   document.querySelector(`[data-id="${id}"]`)?.remove();
-  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n)n.textContent=String(x.num).padStart(2,'0'); });
+  tracks.forEach((x,i)=>{x.num=i+1;const n=document.querySelector(`[data-id="${x.id}"] .tnum`);if(n)n.textContent=String(x.num).padStart(2,'0');});
   updateUI();
 }
 
 function undo() {
-  if (!tracks.length) return;
+  if(!tracks.length) return;
   delTrack(tracks[tracks.length-1].id);
-  if (!tracks.length) clearAll();
+  if(!tracks.length) clearAll();
+  else updateUI();
 }
 
 function clearAll() {
-  recording = false; layerArmed = false;
-  tracks.forEach(t => { stopSrcs(t); t.gain.disconnect(); });
-  tracks = []; hasLoop = false;
-  cancelAnimationFrame(raf);
+  tracks.forEach(t=>{stopSrcs(t);t.gain.disconnect();}); tracks=[];
+  hasLoop=false; recState='idle';
+  cancelAnimationFrame(raf); raf=null;
   document.getElementById('tracks').innerHTML='';
-  document.getElementById('tracks').appendChild(emptyMsg);
-  rfg.style.strokeDashoffset = CIRC;
-  rfg.className = 'rfg';
-  rtime.textContent='--'; rlbl.textContent='ready';
-  document.getElementById('playhead').style.left='0';
-  setState('idle');
+  document.getElementById('progFg').style.width='0%';
+  updateUI(); showMsg('press rec to start');
 }
 
-// ── TRACK DOM ─────────────────────────────────────
+// ════════════════════════════════════
+//  TRACK DOM
+// ════════════════════════════════════
 function renderTrack(t) {
-  const em = document.getElementById('emptyMsg');
-  if (em && em.parentNode) em.remove();
-
-  const el = document.createElement('div');
-  el.className = 'track'; el.dataset.id = t.id;
-  el.innerHTML = `
-    <div class="tnum">${String(t.num).padStart(2,'0')}</div>
+  const el=document.createElement('div');
+  el.className='track'; el.dataset.id=t.id;
+  el.innerHTML=`<div class="tnum">${String(t.num).padStart(2,'0')}</div>
     <div class="twav"><canvas></canvas><div class="tph"></div></div>
     <button class="tbtn mute-btn">mute</button>
     <button class="tbtn del-btn">del</button>`;
-
-  // Waveform
-  const cv = el.querySelector('canvas');
-  const W=200, H=22;
+  // waveform
+  const cv=el.querySelector('canvas'),W=200,H=24;
   cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
   const c=cv.getContext('2d'); c.scale(devicePixelRatio,devicePixelRatio);
-  const d=t.buf.getChannelData(0);
-  const step=Math.max(1,Math.floor(d.length/W)), mid=H/2;
-  c.strokeStyle='rgba(60,220,120,.55)'; c.lineWidth=1; c.beginPath();
+  const d=t.buf.getChannelData(0),step=Math.max(1,Math.floor(d.length/W)),mid=H/2;
+  c.strokeStyle='rgba(60,220,120,.5)'; c.lineWidth=1; c.beginPath();
   for(let x=0;x<W;x++){
     let mn=1,mx=-1;
     for(let j=0;j<step;j++){const v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
-    c.moveTo(x,mid+mn*mid*.85); c.lineTo(x,mid+mx*mid*.85);
+    c.moveTo(x,mid+mn*mid*.8); c.lineTo(x,mid+mx*mid*.8);
   }
   c.stroke();
-
-  el.querySelector('.mute-btn').onclick = ()=>muteTrack(t.id);
-  el.querySelector('.del-btn').onclick  = ()=>delTrack(t.id);
+  el.querySelector('.mute-btn').onclick=()=>muteTrack(t.id);
+  el.querySelector('.del-btn').onclick=()=>delTrack(t.id);
   document.getElementById('tracks').appendChild(el);
-  el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,fill:'forwards'});
+  el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,fill:'forwards'});
 }
 
-// ── ANIMATION ─────────────────────────────────────
-const CIRC = 2*Math.PI*85;
-const rfg   = document.getElementById('rfg');
-const rtime = document.getElementById('rtime');
-const rlbl  = document.getElementById('rlbl');
-rfg.style.strokeDasharray = CIRC;
-rfg.style.strokeDashoffset = CIRC;
-
-function buildBeatBar() {
-  const bar = document.getElementById('beatBar');
-  // remove old ticks
-  bar.querySelectorAll('.beat-tick').forEach(e=>e.remove());
-  const totalBeats = BARS * BEATS;
-  for (let i=1; i<totalBeats; i++) {
-    const tick = document.createElement('div');
-    tick.className = 'beat-tick' + (i%BEATS===0?' bar':'');
-    tick.style.left = (i/totalBeats*100)+'%';
-    bar.appendChild(tick);
-  }
-}
-
+// ════════════════════════════════════
+//  ANIMATION
+// ════════════════════════════════════
 function startAnim() { cancelAnimationFrame(raf); animFrame(); }
 function animFrame() {
-  if (!ctx || !hasLoop) return;
-  const dur     = loopDuration();
-  const elapsed = (ctx.currentTime - loopStart) % dur;
-  const prog    = elapsed / dur;
-
-  rfg.style.strokeDashoffset = CIRC*(1-prog);
-  rtime.textContent = (dur - elapsed).toFixed(1)+'s';
-
-  const ph = document.getElementById('playhead');
-  if (ph) ph.style.left = (prog*100)+'%';
-
-  document.querySelectorAll('.tph').forEach(p => p.style.left=(prog*100)+'%');
-  raf = requestAnimationFrame(animFrame);
+  if(!ctx||!hasLoop){raf=requestAnimationFrame(animFrame);return;}
+  const elapsed=(ctx.currentTime-loopStart)%loopDuration();
+  const prog=elapsed/loopDuration();
+  document.getElementById('progFg').style.width=(prog*100)+'%';
+  document.querySelectorAll('.tph').forEach(p=>p.style.left=(prog*100)+'%');
+  raf=requestAnimationFrame(animFrame);
 }
 
-// ── STATE MACHINE ─────────────────────────────────
-// states: idle | recording-first | playing | armed-layer | recording-layer
-let appState = 'idle';
-function setState(s) {
-  appState = s;
-  updateUI();
-  const msgs = {
-    'idle':             'set tempo & beats, then record',
-    'recording-first':  'recording… press ⏺ again to stop',
-    'playing':          `playing · ${tracks.length} layer${tracks.length!==1?'s':''}`,
-    'armed-layer':      'armed — starts at next bar',
-    'recording-layer':  'recording layer…',
-  };
-  msg(msgs[s]||s);
-  // ring color
-  rfg.classList.remove('rec','go');
-  if(s==='recording-first'||s==='recording-layer') rfg.classList.add('rec');
-  else if(s==='playing') rfg.classList.add('go');
-  if(s==='playing'&&!raf) startAnim();
-}
-
-function msg(t) { document.getElementById('msg').textContent=t; }
-
-function updateUI() {
-  const idle   = appState==='idle';
-  const play   = appState==='playing';
-  const recF   = appState==='recording-first';
-  const armed  = appState==='armed-layer';
-  const recL   = appState==='recording-layer';
-
-  document.getElementById('btnLayer').disabled = !(play||recL);
-  document.getElementById('btnLayer').classList.toggle('armed', armed||recL);
-  document.getElementById('btnUndo').disabled  = !tracks.length||(recF||armed||recL);
-  document.getElementById('btnClear').disabled = !tracks.length&&idle;
-
-  // Record button text + class
-  const br = document.getElementById('btnRec');
-  br.className = recF?'recording':armed?'armed':'';
-
-  // BPM/bars/beats only editable when idle
-  ['bpmUp','bpmDn','barsUp','barsDn','beatsUp','beatsDn'].forEach(id=>{
-    document.getElementById(id).disabled = !idle&&!play;
-  });
-
-  if(appState==='playing') {
-    rlbl.textContent = loopDuration().toFixed(2)+'s loop';
+// beat marks under progress bar
+function buildBeatMarks() {
+  const c=document.getElementById('beatMarks'); c.innerHTML='';
+  const total=BARS*BEATS_PER_BAR;
+  for(let i=0;i<=total;i++){
+    const d=document.createElement('div');
+    d.className='beat-dot'+(i%BEATS_PER_BAR===0?' bar-start':'');
+    c.appendChild(d);
   }
 }
 
-// ── BIG RECORD BUTTON ─────────────────────────────
-document.getElementById('btnRec').onclick = () => {
+// ════════════════════════════════════
+//  UI STATE
+// ════════════════════════════════════
+function showMsg(t){document.getElementById('msg').textContent=t;}
+
+function updateUI() {
+  const idle   = recState==='idle';
+  const recF   = recState==='rec-first';
+  const armed  = recState==='armed-layer';
+  const recL   = recState==='rec-layer';
+
+  // Big rec button
+  const br=document.getElementById('btnRec');
+  const icon=br.querySelector('.icon'), lbl=br.querySelector('.lbl');
+  br.className=''; // reset
+  if(recF){ br.classList.add('recording'); icon.textContent='⏹'; lbl.textContent='stop'; }
+  else if(armed){ br.classList.add('armed'); icon.textContent='⏱'; lbl.textContent='wait…'; }
+  else { icon.textContent='⏺'; lbl.textContent='rec'; }
+
+  // Layer button
+  const bl=document.getElementById('btnLayer');
+  bl.disabled=(!hasLoop&&idle)||recF;
+  bl.className=''; // reset
+  if(armed||recL) bl.classList.add(armed?'armed':'recording');
+  bl.textContent=(recL||armed)?'⏹ stop layer':'+ add layer';
+
+  document.getElementById('btnUndo').disabled  = !tracks.length || !idle;
+  document.getElementById('btnClear').disabled = !tracks.length || !idle;
+
+  // progress bar color
+  const pf=document.getElementById('progFg');
+  pf.classList.toggle('rec', recF||recL);
+
+  // BPM & bars buttons only when idle/playing
+  document.getElementById('bpmUp').disabled = !idle||recF||armed||recL;
+  document.getElementById('bpmDn').disabled = !idle||recF||armed||recL;
+  document.querySelectorAll('.bar-btn').forEach(b=>b.disabled=hasLoop||recF);
+
+  if(hasLoop&&idle) showMsg(`playing · ${tracks.length} layer${tracks.length!==1?'s':''} · ${loopDuration().toFixed(2)}s`);
+}
+
+// ════════════════════════════════════
+//  BUTTON WIRING
+// ════════════════════════════════════
+document.getElementById('btnRec').onclick = async () => {
   if(ctx) ctx.resume();
-  if (appState==='idle')             recordFirst();
-  else if (appState==='recording-first') stopFirst();
+  if(recState==='idle')       recFirst();
+  else if(recState==='rec-first') stopFirst();
 };
 
-// ── LAYER BUTTON ──────────────────────────────────
 document.getElementById('btnLayer').onclick = () => {
-  if(appState==='playing') armLayer();
-  else if(appState==='recording-layer'||appState==='armed-layer') stopLayer();
+  if(recState==='idle'&&hasLoop)       armLayer();
+  else if(recState==='rec-layer'||recState==='armed-layer') stopLayer();
 };
-
-// ── TEMPO / BEAT CONTROLS ─────────────────────────
-function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
-document.getElementById('bpmUp').onclick  = ()=>{ BPM=clamp(BPM+1,40,240); document.getElementById('bpmVal').textContent=BPM; buildBeatBar(); };
-document.getElementById('bpmDn').onclick  = ()=>{ BPM=clamp(BPM-1,40,240); document.getElementById('bpmVal').textContent=BPM; buildBeatBar(); };
-document.getElementById('barsUp').onclick = ()=>{ BARS=clamp(BARS+1,1,8);  document.getElementById('barsVal').textContent=BARS; buildBeatBar(); };
-document.getElementById('barsDn').onclick = ()=>{ BARS=clamp(BARS-1,1,8);  document.getElementById('barsVal').textContent=BARS; buildBeatBar(); };
-document.getElementById('beatsUp').onclick= ()=>{ BEATS=clamp(BEATS+1,2,8);document.getElementById('beatsVal').textContent=BEATS; buildBeatBar(); };
-document.getElementById('beatsDn').onclick= ()=>{ BEATS=clamp(BEATS-1,2,8);document.getElementById('beatsVal').textContent=BEATS; buildBeatBar(); };
 
 document.getElementById('btnUndo').onclick  = undo;
 document.getElementById('btnClear').onclick = clearAll;
 
-// ── INIT ──────────────────────────────────────────
-buildBeatBar();
-setState('idle');
+document.getElementById('bpmUp').onclick = ()=>{BPM=Math.min(240,BPM+1);document.getElementById('bpmVal').textContent=BPM;};
+document.getElementById('bpmDn').onclick = ()=>{BPM=Math.max(40,BPM-1);document.getElementById('bpmVal').textContent=BPM;};
+
+document.querySelectorAll('.bar-btn').forEach(b=>{
+  b.onclick=()=>{
+    if(hasLoop) return; // can't change after first loop
+    BARS=parseInt(b.dataset.bars);
+    document.querySelectorAll('.bar-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    buildBeatMarks();
+  };
+});
+
+// ── INIT ──
+buildBeatMarks();
+startAnim(); // start animation loop so it's ready
+updateUI();
 </script>
 
 </body>

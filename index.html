@@ -7,292 +7,327 @@
 <title>LOOPER</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0e0e0e;color:#e8e8e8;font-family:'SF Mono','Fira Code',monospace;display:flex;flex-direction:column;align-items:center;min-height:100vh;gap:20px;padding:28px 20px;-webkit-font-smoothing:antialiased}
-h1{font-size:18px;letter-spacing:.35em;font-weight:700;opacity:.9}
-#status{font-size:11px;letter-spacing:.12em;color:#555;text-transform:uppercase;min-height:16px;text-align:center}
-.ring-wrap{position:relative;width:150px;height:150px}
+html,body{height:100%;background:#111;color:#e0e0e0;font-family:'SF Mono','Fira Code',monospace;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;align-items:center;padding:32px 20px;gap:24px}
+
+h1{font-size:15px;letter-spacing:.4em;font-weight:600;color:#888}
+#msg{font-size:11px;letter-spacing:.1em;color:#555;text-transform:uppercase;min-height:14px;text-align:center}
+
+/* BIG RECORD BUTTON */
+#btnRec{
+width:96px;height:96px;border-radius:50%;
+border:2px solid #333;background:#1a1a1a;
+font-size:32px;cursor:pointer;transition:all .12s;
+display:flex;align-items:center;justify-content:center;
+color:#e8453c;position:relative;
+}
+#btnRec:hover{border-color:#e8453c;background:#1f1212}
+#btnRec.armed{border-color:#ff8c42;color:#ff8c42;animation:blink .5s ease-in-out infinite alternate}
+#btnRec.recording{border-color:#e8453c;background:#1f1212;box-shadow:0 0 0 0 rgba(232,69,60,.4);animation:ripple 1s ease-out infinite}
+@keyframes blink{from{opacity:1}to{opacity:.3}}
+@keyframes ripple{0%{box-shadow:0 0 0 0 rgba(232,69,60,.5)}100%{box-shadow:0 0 0 20px rgba(232,69,60,0)}}
+
+/* RING */
+.ring-wrap{position:relative;width:200px;height:200px}
 svg{width:100%;height:100%;transform:rotate(-90deg)}
-.rbg{fill:none;stroke:#1c1c1c;stroke-width:6}
-.rfg{fill:none;stroke:#3cdc78;stroke-width:6;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:408;transition:stroke .2s}
+.rbg{fill:none;stroke:#1e1e1e;stroke-width:4}
+.rfg{fill:none;stroke:#2a6e4a;stroke-width:4;stroke-linecap:round;stroke-dasharray:534;stroke-dashoffset:534;transition:stroke .2s}
 .rfg.rec{stroke:#e8453c}
-.rfg.waiting{stroke:#ff8c42;animation:pulse .6s ease-in-out infinite alternate}
-@keyframes pulse{from{opacity:1}to{opacity:.3}}
-.ring-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
-.rt{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
-.rl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#555}
+.rfg.go{stroke:#3cdc78}
+.ring-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.rt{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.rl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#444}
 
-/* Controls */
+/* BAR showing beat grid */
+#beatBar{width:100%;max-width:420px;height:28px;background:#1a1a1a;border-radius:4px;position:relative;overflow:hidden}
+.beat-tick{position:absolute;top:0;bottom:0;width:1px;background:#2a2a2a}
+.beat-tick.bar{background:#333}
+#playhead{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.8;transition:none}
+
+/* TEMPO & BEATS */
+.config{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:center}
+.cfg-group{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cfg-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#444}
+.cfg-val{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.cfg-btns{display:flex;gap:4px}
+.cfg-btn{width:28px;height:22px;border:1px solid #2a2a2a;border-radius:3px;background:#161616;color:#888;font-family:inherit;font-size:12px;cursor:pointer;transition:all .1s}
+.cfg-btn:hover{border-color:#444;color:#e0e0e0}
+
+/* CONTROLS */
 .ctrl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-button{padding:12px 20px;border:1px solid #2a2a2a;border-radius:5px;background:#141414;color:#aaa;font-family:inherit;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .12s;min-width:90px}
-button:hover:not(:disabled){border-color:#444;background:#1a1a1a;color:#e8e8e8}
-button:disabled{opacity:.25;cursor:not-allowed}
-button:active:not(:disabled){transform:scale(.95)}
-#btnRec{border-color:rgba(232,69,60,.35);color:#e8453c}
-#btnRec:hover:not(:disabled){border-color:#e8453c;background:rgba(232,69,60,.1)}
-#btnRec.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.08);animation:pulse .7s ease-in-out infinite alternate}
-#btnRec.recording{border-color:#e8453c;color:#e8453c;background:rgba(232,69,60,.12);animation:pulse .6s ease-in-out infinite alternate}
-#btnLayer{border-color:rgba(255,140,66,.35);color:#ff8c42}
-#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.1)}
-#btnLayer.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.1);animation:pulse .7s ease-in-out infinite alternate}
-#btnLayer.recording{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.15);animation:pulse .6s ease-in-out infinite alternate}
+button.action{padding:10px 20px;border:1px solid #2a2a2a;border-radius:4px;background:#161616;color:#888;font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .12s;min-width:80px}
+button.action:hover:not(:disabled){border-color:#444;background:#1c1c1c;color:#e0e0e0}
+button.action:disabled{opacity:.2;cursor:not-allowed}
+button.action:active:not(:disabled){transform:scale(.95)}
+#btnLayer{color:#ff8c42;border-color:rgba(255,140,66,.3)}
+#btnLayer:hover:not(:disabled){border-color:#ff8c42;background:rgba(255,140,66,.06)}
+#btnLayer.armed{border-color:#ff8c42;color:#ff8c42;background:rgba(255,140,66,.1);animation:blink .5s ease-in-out infinite alternate}
 
-/* Tracks */
-#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:7px}
-.empty{font-size:10px;letter-spacing:.1em;color:#333;text-transform:uppercase;text-align:center;padding:24px 0}
-.track{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#141414;border:1px solid #222;border-radius:5px;transition:opacity .2s}
-.track.muted{opacity:.35}
-.tnum{font-size:10px;color:#444;min-width:18px}
-.tbar{flex:1;height:22px;background:#0a0a0a;border-radius:3px;position:relative;overflow:hidden}
-.tbar canvas{display:block;width:100%;height:100%}
-.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.6;pointer-events:none}
+/* TRACKS */
+#tracks{width:100%;max-width:420px;display:flex;flex-direction:column;gap:6px}
+.empty{font-size:10px;letter-spacing:.1em;color:#2a2a2a;text-transform:uppercase;text-align:center;padding:20px 0}
+.track{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#161616;border:1px solid #222;border-radius:4px}
+.track.muted{opacity:.3}
+.tnum{font-size:10px;color:#333;min-width:18px}
+.twav{flex:1;height:22px;background:#111;border-radius:2px;position:relative;overflow:hidden}
+.twav canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+.tph{position:absolute;top:0;bottom:0;width:2px;background:#3cdc78;opacity:.6}
 .track.muted .tph{display:none}
-.tbtn{padding:3px 9px;border:1px solid #222;border-radius:3px;background:transparent;color:#444;font-family:inherit;font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .1s;white-space:nowrap}
-.tbtn:hover{border-color:#444;color:#aaa}
-.tbtn.active{border-color:#e8453c;color:#e8453c}
-
-/* Latency note */
-#latencyNote{font-size:9px;letter-spacing:.08em;color:#333;text-transform:uppercase;text-align:center}
+.tbtn{padding:3px 8px;border:1px solid #222;border-radius:3px;background:transparent;color:#333;font-family:inherit;font-size:9px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.tbtn:hover{border-color:#444;color:#888}
+.tbtn.on{border-color:#e8453c55;color:#e8453c}
 </style>
 
 </head>
 <body>
 <h1>LOOPER</h1>
-<div id="status">ready</div>
+<div id="msg">set tempo & beats, then record</div>
 
-<div class="ring-wrap">
-  <svg viewBox="0 0 130 130">
-    <circle class="rbg" cx="65" cy="65" r="55"/>
-    <circle class="rfg" id="rfg" cx="65" cy="65" r="55"/>
-  </svg>
-  <div class="ring-in">
-    <div class="rt" id="rtime">--</div>
-    <div class="rl" id="rlbl">no loop</div>
+<!-- Tempo / Beats config -->
+
+<div class="config">
+  <div class="cfg-group">
+    <div class="cfg-label">bpm</div>
+    <div class="cfg-val" id="bpmVal">120</div>
+    <div class="cfg-btns">
+      <button class="cfg-btn" id="bpmDn">−</button>
+      <button class="cfg-btn" id="bpmUp">+</button>
+    </div>
+  </div>
+  <div class="cfg-group">
+    <div class="cfg-label">bars</div>
+    <div class="cfg-val" id="barsVal">2</div>
+    <div class="cfg-btns">
+      <button class="cfg-btn" id="barsDn">−</button>
+      <button class="cfg-btn" id="barsUp">+</button>
+    </div>
+  </div>
+  <div class="cfg-group">
+    <div class="cfg-label">beats/bar</div>
+    <div class="cfg-val" id="beatsVal">4</div>
+    <div class="cfg-btns">
+      <button class="cfg-btn" id="beatsDn">−</button>
+      <button class="cfg-btn" id="beatsUp">+</button>
+    </div>
   </div>
 </div>
 
-<div class="ctrl">
-  <button id="btnRec">⏺ record</button>
-  <button id="btnLayer" disabled>+ layer</button>
-  <button id="btnStop" disabled>⏹ stop</button>
-</div>
-<div class="ctrl">
-  <button id="btnUndo" disabled>↩ undo</button>
-  <button id="btnClear" disabled>✕ clear</button>
-</div>
-<div id="latencyNote"></div>
+<!-- Ring -->
 
-<div id="tracks"><div class="empty" id="emptyMsg">record first loop to start</div></div>
+<div class="ring-wrap">
+  <svg viewBox="0 0 180 180">
+    <circle class="rbg" cx="90" cy="90" r="85"/>
+    <circle class="rfg" id="rfg" cx="90" cy="90" r="85"/>
+  </svg>
+  <div class="ring-in">
+    <button id="btnRec">⏺</button>
+    <div class="rt" id="rtime">--</div>
+    <div class="rl" id="rlbl">ready</div>
+  </div>
+</div>
+
+<!-- Beat bar -->
+
+<div id="beatBar"><div id="playhead"></div></div>
+
+<!-- Layer + utility -->
+
+<div class="ctrl">
+  <button class="action" id="btnLayer" disabled>+ layer</button>
+  <button class="action" id="btnUndo" disabled>↩ undo</button>
+  <button class="action" id="btnClear" disabled>✕ clear</button>
+</div>
+
+<!-- Tracks -->
+
+<div id="tracks"><div class="empty" id="emptyMsg">no layers yet</div></div>
 
 <script>
-// ════════════════════════════════════════════════════
-//  LOOPER with quantized recording & latency compensation
-//
-//  Key ideas:
-//  1. QUANTIZE: layer recording starts at exact loop boundary,
-//     not when button is pressed. Button press = "arm" → actual
-//     record starts at next cycle boundary via AudioContext scheduling.
-//
-//  2. LATENCY COMPENSATION: AudioContext has input latency
-//     (mic → buffer) and output latency (buffer → speakers).
-//     We offset the recorded audio backward by baseLatency + inputLatency.
-//
-//  3. OVERDUB BUFFER: We start MediaRecorder slightly before the
-//     loop boundary (1 full cycle early) so we capture audio that
-//     started before the boundary, then trim the buffer precisely.
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  LOOPER — PCM recording via ScriptProcessorNode
+//  No MediaRecorder. Samples captured directly from AudioContext.
+//  Loop length = bars × beats/bar × (60/bpm) seconds
+//  All layers share the same loopStart anchor.
+//  Layers are "armed" and start/stop exactly on bar boundaries.
+// ════════════════════════════════════════════════════════
 
-const CIRC = 2 * Math.PI * 55; // ring circumference
+// ── CONFIG ───────────────────────────────────────
+let BPM   = 120;
+let BARS  = 2;
+let BEATS = 4;   // beats per bar
 
-// DOM
-const btnRec   = document.getElementById('btnRec');
-const btnLayer = document.getElementById('btnLayer');
-const btnStop  = document.getElementById('btnStop');
-const btnUndo  = document.getElementById('btnUndo');
-const btnClear = document.getElementById('btnClear');
-const rfg      = document.getElementById('rfg');
-const rtime    = document.getElementById('rtime');
-const rlbl     = document.getElementById('rlbl');
-const statusEl = document.getElementById('status');
-const trackList= document.getElementById('tracks');
-const emptyMsg = document.getElementById('emptyMsg');
-const latNote  = document.getElementById('latencyNote');
+function loopDuration() { return BARS * BEATS * (60 / BPM); }
 
-rfg.style.strokeDasharray  = CIRC;
-rfg.style.strokeDashoffset = CIRC;
+// ── AUDIO ────────────────────────────────────────
+let ctx = null, micSource = null, scriptNode = null;
+let recording = false;
+let recBuffer = [];      // Float32Array chunks during recording
+let recStartTime = 0;    // audioCtx.currentTime when recording started
 
-// State
-let ctx, stream;
-let loopDur = 0, loopStart = 0;
-let tracks = [];
-let raf = null;
+let loopStart = 0;       // audioCtx.currentTime of loop epoch
+let hasLoop   = false;
+let tracks    = [];
+let raf       = null;
 
-// Recording state
-const REC_STATE = { IDLE:'idle', ARMED_FIRST:'armed_first', RECORDING_FIRST:'recording_first', ARMED_LAYER:'armed_layer', RECORDING_LAYER:'recording_layer' };
-let recState = REC_STATE.IDLE;
-let recorder = null, recChunks = [];
-let recArmTime = 0;       // audioCtx time when recording actually started
-let inputLatency = 0;     // estimated input latency in seconds
+// Armed state: we queue a layer record to start at next loop boundary
+let layerArmed = false;
+let layerArmScheduled = false; // setTimeout has been set
 
-// ── INIT ──────────────────────────────────────────
+// ── INIT MIC ─────────────────────────────────────
 async function initAudio() {
   if (ctx) return true;
+  ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100, latencyHint: 'interactive' });
   try {
-    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
-  } catch(e) { alert('Web Audio API not supported'); return false; }
-
-  try {
-    // Request mic with echoCancellation off for clean looping
-    stream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
     });
+    micSource = ctx.createMediaStreamSource(stream);
   } catch(e) {
-    alert('Mic denied.\nOpen this page over https:// and allow microphone access.');
-    ctx.close(); ctx = null; return false;
+    msg('mic denied — need https:// and mic permission');
+    return false;
   }
 
-  // Measure latency
+  // ScriptProcessor: captures raw PCM from mic into recBuffer
+  // Buffer size 256 = ~5.8ms at 44100Hz — fine granularity
+  scriptNode = ctx.createScriptProcessor(256, 1, 1);
+  scriptNode.onaudioprocess = (e) => {
+    if (!recording) return;
+    // Copy input samples (mono)
+    const chunk = new Float32Array(e.inputBuffer.getChannelData(0));
+    recBuffer.push(chunk);
+  };
+
+  micSource.connect(scriptNode);
+  scriptNode.connect(ctx.destination); // must connect to stay active (muted)
+  // Mute script output so we don't hear our own mic
+  const muteGain = ctx.createGain();
+  muteGain.gain.value = 0;
+  scriptNode.disconnect();
+  micSource.connect(scriptNode);
+  scriptNode.connect(muteGain);
+  muteGain.connect(ctx.destination);
+
   await ctx.resume();
-  inputLatency = (ctx.baseLatency || 0) + (ctx.inputLatency || 0);
-  if (inputLatency > 0) {
-    latNote.textContent = `latency compensation: ${Math.round(inputLatency*1000)}ms`;
-  }
   return true;
 }
 
-// ── FIRST LOOP ────────────────────────────────────
-async function armFirst() {
+// ── RECORD FIRST LOOP ─────────────────────────────
+async function recordFirst() {
   if (!(await initAudio())) return;
-  await ctx.resume();
-  recState = REC_STATE.ARMED_FIRST;
-  setStatus('armed — play and stop when ready');
-  ui();
-  // Start recording immediately for first loop (no quantize needed)
-  beginRecording();
-  recState = REC_STATE.RECORDING_FIRST;
-  ui();
+  recording = true;
+  recBuffer = [];
+  recStartTime = ctx.currentTime;
+  setState('recording-first');
 }
 
-// ── ADD LAYER ─────────────────────────────────────
-async function armLayer() {
-  if (!loopDur) return;
-  recState = REC_STATE.ARMED_LAYER;
-  setStatus('armed — will start at next loop boundary');
-  ui();
+function stopFirst() {
+  if (!recording) return;
+  recording = false;
 
-  // Calculate time until next loop boundary
+  // Build AudioBuffer from captured PCM
+  const buf = buildBuffer(recBuffer);
+  if (!buf || buf.length === 0) { setState('idle'); return; }
+
+  // Quantize: trim/extend to exact loop length
+  const dur = loopDuration();
+  const quantized = quantizeBuffer(buf, dur);
+
+  loopStart = ctx.currentTime;
+  hasLoop   = true;
+
+  addTrack(quantized);
+  scheduleAll();
+  startAnim();
+  setState('playing');
+}
+
+// ── ARM LAYER ─────────────────────────────────────
+function armLayer() {
+  if (!hasLoop || layerArmed) return;
+  layerArmed = true;
+  setState('armed-layer');
+
+  // Calculate ms until next loop boundary
   const now     = ctx.currentTime;
-  const elapsed = (now - loopStart) % loopDur;
-  const toNext  = loopDur - elapsed;
+  const elapsed = (now - loopStart) % loopDuration();
+  const toNext  = (loopDuration() - elapsed) * 1000; // ms
 
-  // Start MediaRecorder slightly early (one cycle before boundary)
-  // so we have audio buffered right at the moment the loop starts.
-  // We'll trim precisely after decode.
-  const preRoll = Math.min(toNext, loopDur); // start recording now
-  recArmTime = now + toNext; // exact time recording "officially" starts
+  // Start recording slightly BEFORE the boundary so we don't miss any samples
+  // We'll trim precisely after
+  const preRoll = Math.min(100, toNext); // 100ms pre-roll max
+  setTimeout(() => startLayerRecord(), toNext - preRoll);
 
-  beginRecording(); // start capturing audio now (pre-roll)
-
-  // Transition to RECORDING at exact boundary
+  // Mark exact boundary time for trimming
+  const boundaryTime = now + (loopDuration() - elapsed);
   setTimeout(() => {
-    if (recState === REC_STATE.ARMED_LAYER) {
-      recState = REC_STATE.RECORDING_LAYER;
-      setStatus('recording layer…');
-      ui();
+    if (recording) {
+      // Layer recording already started — mark the exact start time
+      recStartTime = boundaryTime;
     }
-  }, toNext * 1000);
+  }, toNext - preRoll);
 
-  // Auto-stop at next boundary after that
-  setTimeout(() => {
-    if (recState === REC_STATE.RECORDING_LAYER) {
-      stopRecording();
-    }
-  }, (toNext + loopDur) * 1000);
+  // Auto stop at next boundary after one full loop
+  setTimeout(() => { if (recording) stopLayer(); }, toNext + loopDuration() * 1000);
 }
 
-// ── BEGIN RECORDING (MediaRecorder) ───────────────
-function beginRecording() {
-  recChunks = [];
-  const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4']
-    .find(t => MediaRecorder.isTypeSupported(t)) || '';
-  try {
-    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
-  } catch(e) {
-    recorder = new MediaRecorder(stream);
-  }
-  recorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
-  recorder.onstop = finishRecording;
-  recorder.start(20); // 20ms chunks for fine granularity
+function startLayerRecord() {
+  recBuffer = [];
+  recStartTime = ctx.currentTime + (100/1000); // will be corrected at boundary
+  recording = true;
+  setState('recording-layer');
 }
 
-// ── STOP ──────────────────────────────────────────
-function stopRecording() {
-  if (!recorder || recorder.state === 'inactive') {
-    recState = REC_STATE.IDLE; ui(); return;
-  }
-  recorder.stop();
+function stopLayer() {
+  if (!recording) return;
+  recording = false;
+  layerArmed = false;
+
+  const rawBuf = buildBuffer(recBuffer);
+  if (!rawBuf) { setState('playing'); return; }
+
+  // Trim: find sample offset from recStartTime to recStartTime+loopDuration
+  const dur         = loopDuration();
+  const sr          = ctx.sampleRate;
+  const startOffset = Math.round((recStartTime - (ctx.currentTime - rawBuf.duration)) * sr);
+  // simpler: just take last loopDuration seconds of the buffer
+  const loopSamples = Math.round(dur * sr);
+  const totalSamples= rawBuf.length;
+  const from        = Math.max(0, totalSamples - loopSamples);
+
+  const trimmed = ctx.createBuffer(1, loopSamples, sr);
+  const src     = rawBuf.getChannelData(0);
+  const dst     = trimmed.getChannelData(0);
+  const copyLen = Math.min(loopSamples, totalSamples - from);
+  dst.set(src.subarray(from, from + copyLen));
+
+  addTrack(trimmed);
+  scheduleTrack(tracks[tracks.length - 1]);
+  setState('playing');
 }
 
-// ── FINISH & PROCESS ──────────────────────────────
-async function finishRecording() {
-  const wasFirst = recState === REC_STATE.RECORDING_FIRST;
-  const wasLayer = recState === REC_STATE.RECORDING_LAYER;
-  recState = REC_STATE.IDLE;
-
-  if (!recChunks.length) { ui(); return; }
-
-  const blob = new Blob(recChunks, { type: recChunks[0].type || 'audio/webm' });
-  const ab   = await blob.arrayBuffer();
-  let rawBuf;
-  try { rawBuf = await ctx.decodeAudioData(ab); }
-  catch(e) { setStatus('decode error — try again'); ui(); return; }
-
-  if (wasFirst) {
-    // First loop: use as-is, set master duration
-    loopDur   = rawBuf.duration;
-    loopStart = ctx.currentTime; // loops start NOW
-    addTrack(rawBuf);
-    scheduleAll();
-    startAnim();
-
-  } else if (wasLayer) {
-    // Layer: trim to exactly one loop duration, compensating for latency
-    // The raw buffer contains: preRoll audio + one loop of recording
-    // recArmTime = audioCtx time when loop boundary was
-    // We need to find the sample offset corresponding to the boundary.
-
-    const sampleRate  = rawBuf.sampleRate;
-    const now         = ctx.currentTime;
-
-    // How long ago did recording start? (MediaRecorder started before arm time)
-    // The arm time marks the "true" start of the loop
-    const recStartedAt  = recArmTime - loopDur; // when MediaRecorder.start() was called
-    const preRollSecs   = recArmTime - recStartedAt; // = loopDur
-    const preRollSamples= Math.round(preRollSecs * sampleRate);
-    const loopSamples   = Math.round(loopDur * sampleRate);
-
-    // Account for input latency: shift start point earlier
-    const latSamples = Math.round(inputLatency * sampleRate);
-    const startSample = Math.max(0, preRollSamples - latSamples);
-    const endSample   = Math.min(rawBuf.length, startSample + loopSamples);
-
-    const fitted = ctx.createBuffer(rawBuf.numberOfChannels, loopSamples, sampleRate);
-    for (let ch = 0; ch < rawBuf.numberOfChannels; ch++) {
-      const src = rawBuf.getChannelData(ch);
-      const dst = fitted.getChannelData(ch);
-      const copyLen = Math.min(endSample - startSample, loopSamples);
-      if (startSample < src.length) {
-        dst.set(src.subarray(startSample, startSample + copyLen));
-      }
-    }
-
-    addTrack(fitted);
-    scheduleTrack(tracks[tracks.length - 1]);
-  }
-
-  ui();
+// ── BUFFER HELPERS ────────────────────────────────
+function buildBuffer(chunks) {
+  if (!chunks.length) return null;
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const buf   = ctx.createBuffer(1, total, ctx.sampleRate);
+  const dst   = buf.getChannelData(0);
+  let off = 0;
+  chunks.forEach(c => { dst.set(c, off); off += c.length; });
+  return buf;
 }
 
-// ── TRACKS ────────────────────────────────────────
+// Pad or trim buffer to exact duration
+function quantizeBuffer(buf, dur) {
+  const sr      = ctx.sampleRate;
+  const target  = Math.round(dur * sr);
+  const out     = ctx.createBuffer(1, target, sr);
+  const src     = buf.getChannelData(0);
+  const dst     = out.getChannelData(0);
+  dst.set(src.subarray(0, Math.min(src.length, target)));
+  return out;
+}
+
+// ── TRACK SCHEDULING ──────────────────────────────
 function addTrack(buf) {
   const gain = ctx.createGain();
   gain.connect(ctx.destination);
@@ -302,34 +337,28 @@ function addTrack(buf) {
   return t;
 }
 
-// Schedule a track to loop in sync with the global clock.
-// All tracks share the same loopStart reference point.
 function scheduleTrack(t) {
   stopSrcs(t);
   if (t.muted) return;
   const now     = ctx.currentTime;
-  const elapsed = (now - loopStart) % loopDur;
-  playLoop(t, now, elapsed % t.buf.duration);
+  const elapsed = (now - loopStart) % loopDuration();
+  // offset into the buffer = where we are in the cycle
+  const offset  = elapsed % t.buf.duration;
+  playLoop(t, now, offset);
 }
 
-function scheduleAll() {
-  tracks.forEach(scheduleTrack);
-}
+function scheduleAll() { tracks.forEach(scheduleTrack); }
 
-// Schedule one playback iteration; on ended, schedule the next.
-// Tiny cross-fade (5ms) at boundaries eliminates clicks.
 function playLoop(t, when, offset) {
-  const src = ctx.createBufferSource();
-  src.buffer = t.buf;
-
-  // Cross-fade gain node per-source to avoid click at loop point
+  const src      = ctx.createBufferSource();
+  src.buffer     = t.buf;
   const fadeGain = ctx.createGain();
-  fadeGain.connect(t.gain);
   src.connect(fadeGain);
+  fadeGain.connect(t.gain);
 
   const dur  = t.buf.duration;
   const rem  = dur - offset;
-  const fade = 0.004; // 4ms
+  const fade = 0.003; // 3ms crossfade
 
   fadeGain.gain.setValueAtTime(0, when);
   fadeGain.gain.linearRampToValueAtTime(1, when + fade);
@@ -363,7 +392,7 @@ function muteTrack(id) {
   if (el) {
     el.classList.toggle('muted', t.muted);
     const btn = el.querySelector('.mute-btn');
-    if (btn) { btn.textContent = t.muted ? 'unmute' : 'mute'; btn.classList.toggle('active', t.muted); }
+    if (btn) { btn.textContent = t.muted?'unmute':'mute'; btn.classList.toggle('on', t.muted); }
   }
 }
 
@@ -372,8 +401,8 @@ function delTrack(id) {
   stopSrcs(t); t.gain.disconnect();
   tracks = tracks.filter(x => x.id!==id);
   document.querySelector(`[data-id="${id}"]`)?.remove();
-  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n) n.textContent=String(x.num).padStart(2,'0'); });
-  ui();
+  tracks.forEach((x,i)=>{ x.num=i+1; const n=document.querySelector(`[data-id="${x.id}"] .tnum`); if(n)n.textContent=String(x.num).padStart(2,'0'); });
+  updateUI();
 }
 
 function undo() {
@@ -383,105 +412,168 @@ function undo() {
 }
 
 function clearAll() {
+  recording = false; layerArmed = false;
   tracks.forEach(t => { stopSrcs(t); t.gain.disconnect(); });
-  tracks = []; loopDur = 0; loopStart = 0;
+  tracks = []; hasLoop = false;
   cancelAnimationFrame(raf);
-  trackList.innerHTML = ''; trackList.appendChild(emptyMsg);
+  document.getElementById('tracks').innerHTML='';
+  document.getElementById('tracks').appendChild(emptyMsg);
   rfg.style.strokeDashoffset = CIRC;
-  rfg.classList.remove('rec','waiting');
-  rtime.textContent = '--'; rlbl.textContent = 'no loop';
-  recState = REC_STATE.IDLE;
-  ui();
+  rfg.className = 'rfg';
+  rtime.textContent='--'; rlbl.textContent='ready';
+  document.getElementById('playhead').style.left='0';
+  setState('idle');
 }
 
-// ── RENDER TRACK ──────────────────────────────────
+// ── TRACK DOM ─────────────────────────────────────
 function renderTrack(t) {
-  if (emptyMsg.parentNode) emptyMsg.remove();
+  const em = document.getElementById('emptyMsg');
+  if (em && em.parentNode) em.remove();
+
   const el = document.createElement('div');
-  el.className = 'track';
-  el.dataset.id = t.id;
+  el.className = 'track'; el.dataset.id = t.id;
   el.innerHTML = `
     <div class="tnum">${String(t.num).padStart(2,'0')}</div>
-    <div class="tbar"><canvas></canvas><div class="tph"></div></div>
+    <div class="twav"><canvas></canvas><div class="tph"></div></div>
     <button class="tbtn mute-btn">mute</button>
     <button class="tbtn del-btn">del</button>`;
 
-  // Draw waveform
+  // Waveform
   const cv = el.querySelector('canvas');
   const W=200, H=22;
-  cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
-  cv.style.width = W+'px'; cv.style.height = H+'px';
-  const c = cv.getContext('2d'); c.scale(devicePixelRatio, devicePixelRatio);
-  const d = t.buf.getChannelData(0);
-  const step = Math.max(1, Math.floor(d.length / W));
-  const mid  = H / 2;
-  c.strokeStyle = 'rgba(60,220,120,.6)'; c.lineWidth = 1; c.beginPath();
-  for (let x=0;x<W;x++) {
-    let mn=1, mx=-1;
-    for (let j=0;j<step;j++) { const v=d[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
-    c.moveTo(x, mid+mn*mid*.8); c.lineTo(x, mid+mx*mid*.8);
+  cv.width=W*devicePixelRatio; cv.height=H*devicePixelRatio;
+  const c=cv.getContext('2d'); c.scale(devicePixelRatio,devicePixelRatio);
+  const d=t.buf.getChannelData(0);
+  const step=Math.max(1,Math.floor(d.length/W)), mid=H/2;
+  c.strokeStyle='rgba(60,220,120,.55)'; c.lineWidth=1; c.beginPath();
+  for(let x=0;x<W;x++){
+    let mn=1,mx=-1;
+    for(let j=0;j<step;j++){const v=d[x*step+j]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
+    c.moveTo(x,mid+mn*mid*.85); c.lineTo(x,mid+mx*mid*.85);
   }
   c.stroke();
 
-  el.querySelector('.mute-btn').onclick = () => muteTrack(t.id);
-  el.querySelector('.del-btn').onclick  = () => delTrack(t.id);
-  trackList.appendChild(el);
-  el.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:200,fill:'forwards'});
+  el.querySelector('.mute-btn').onclick = ()=>muteTrack(t.id);
+  el.querySelector('.del-btn').onclick  = ()=>delTrack(t.id);
+  document.getElementById('tracks').appendChild(el);
+  el.animate([{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,fill:'forwards'});
 }
 
 // ── ANIMATION ─────────────────────────────────────
+const CIRC = 2*Math.PI*85;
+const rfg   = document.getElementById('rfg');
+const rtime = document.getElementById('rtime');
+const rlbl  = document.getElementById('rlbl');
+rfg.style.strokeDasharray = CIRC;
+rfg.style.strokeDashoffset = CIRC;
+
+function buildBeatBar() {
+  const bar = document.getElementById('beatBar');
+  // remove old ticks
+  bar.querySelectorAll('.beat-tick').forEach(e=>e.remove());
+  const totalBeats = BARS * BEATS;
+  for (let i=1; i<totalBeats; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'beat-tick' + (i%BEATS===0?' bar':'');
+    tick.style.left = (i/totalBeats*100)+'%';
+    bar.appendChild(tick);
+  }
+}
+
 function startAnim() { cancelAnimationFrame(raf); animFrame(); }
 function animFrame() {
-  if (!ctx || !loopDur) return;
-  const el   = (ctx.currentTime - loopStart) % loopDur;
-  const prog = el / loopDur;
-  rfg.style.strokeDashoffset = CIRC * (1 - prog);
-  rtime.textContent = (loopDur - el).toFixed(1) + 's';
-  document.querySelectorAll('.tph').forEach(ph => ph.style.left = (prog*100)+'%');
+  if (!ctx || !hasLoop) return;
+  const dur     = loopDuration();
+  const elapsed = (ctx.currentTime - loopStart) % dur;
+  const prog    = elapsed / dur;
+
+  rfg.style.strokeDashoffset = CIRC*(1-prog);
+  rtime.textContent = (dur - elapsed).toFixed(1)+'s';
+
+  const ph = document.getElementById('playhead');
+  if (ph) ph.style.left = (prog*100)+'%';
+
+  document.querySelectorAll('.tph').forEach(p => p.style.left=(prog*100)+'%');
   raf = requestAnimationFrame(animFrame);
 }
 
-// ── UI ────────────────────────────────────────────
-function setStatus(t) { statusEl.textContent = t; }
-
-function ui() {
-  const isIdle = recState === REC_STATE.IDLE;
-  const isArmedFirst = recState === REC_STATE.ARMED_FIRST;
-  const isRecFirst   = recState === REC_STATE.RECORDING_FIRST;
-  const isArmedLayer = recState === REC_STATE.ARMED_LAYER;
-  const isRecLayer   = recState === REC_STATE.RECORDING_LAYER;
-  const isRecording  = isRecFirst || isRecLayer;
-  const isArmed      = isArmedFirst || isArmedLayer;
-  const hasLoop      = loopDur > 0;
-
-  btnRec.disabled    = !isIdle || isArmed || isRecording;
-  btnLayer.disabled  = !isIdle || !hasLoop;
-  btnStop.disabled   = isIdle && !isArmed;
-  btnUndo.disabled   = !tracks.length || !isIdle;
-  btnClear.disabled  = !tracks.length || !isIdle;
-
-  btnRec.className   = isArmedFirst ? 'armed' : isRecFirst ? 'recording' : '';
-  btnLayer.className = isArmedLayer ? 'armed' : isRecLayer ? 'recording' : '';
-
-  rfg.classList.toggle('rec',     isRecording);
-  rfg.classList.toggle('waiting', isArmed);
-
-  if (isArmedFirst || isRecFirst) { setStatus(isArmedFirst ? 'ready — recording started' : 'recording first loop…'); }
-  else if (isArmedLayer)  { setStatus('armed — waiting for loop boundary…'); }
-  else if (isRecLayer)    { setStatus('recording layer…'); }
-  else if (hasLoop)       { setStatus(`playing · ${tracks.length} layer${tracks.length!==1?'s':''}` ); rlbl.textContent = loopDur.toFixed(2)+'s loop'; }
-  else                    { setStatus('ready'); }
+// ── STATE MACHINE ─────────────────────────────────
+// states: idle | recording-first | playing | armed-layer | recording-layer
+let appState = 'idle';
+function setState(s) {
+  appState = s;
+  updateUI();
+  const msgs = {
+    'idle':             'set tempo & beats, then record',
+    'recording-first':  'recording… press ⏺ again to stop',
+    'playing':          `playing · ${tracks.length} layer${tracks.length!==1?'s':''}`,
+    'armed-layer':      'armed — starts at next bar',
+    'recording-layer':  'recording layer…',
+  };
+  msg(msgs[s]||s);
+  // ring color
+  rfg.classList.remove('rec','go');
+  if(s==='recording-first'||s==='recording-layer') rfg.classList.add('rec');
+  else if(s==='playing') rfg.classList.add('go');
+  if(s==='playing'&&!raf) startAnim();
 }
 
-// ── BUTTON WIRING ─────────────────────────────────
-btnRec.onclick   = armFirst;
-btnLayer.onclick = armLayer;
-btnStop.onclick  = stopRecording;
-btnUndo.onclick  = undo;
-btnClear.onclick = clearAll;
+function msg(t) { document.getElementById('msg').textContent=t; }
 
-// Init UI
-ui();
+function updateUI() {
+  const idle   = appState==='idle';
+  const play   = appState==='playing';
+  const recF   = appState==='recording-first';
+  const armed  = appState==='armed-layer';
+  const recL   = appState==='recording-layer';
+
+  document.getElementById('btnLayer').disabled = !(play||recL);
+  document.getElementById('btnLayer').classList.toggle('armed', armed||recL);
+  document.getElementById('btnUndo').disabled  = !tracks.length||(recF||armed||recL);
+  document.getElementById('btnClear').disabled = !tracks.length&&idle;
+
+  // Record button text + class
+  const br = document.getElementById('btnRec');
+  br.className = recF?'recording':armed?'armed':'';
+
+  // BPM/bars/beats only editable when idle
+  ['bpmUp','bpmDn','barsUp','barsDn','beatsUp','beatsDn'].forEach(id=>{
+    document.getElementById(id).disabled = !idle&&!play;
+  });
+
+  if(appState==='playing') {
+    rlbl.textContent = loopDuration().toFixed(2)+'s loop';
+  }
+}
+
+// ── BIG RECORD BUTTON ─────────────────────────────
+document.getElementById('btnRec').onclick = () => {
+  if(ctx) ctx.resume();
+  if (appState==='idle')             recordFirst();
+  else if (appState==='recording-first') stopFirst();
+};
+
+// ── LAYER BUTTON ──────────────────────────────────
+document.getElementById('btnLayer').onclick = () => {
+  if(appState==='playing') armLayer();
+  else if(appState==='recording-layer'||appState==='armed-layer') stopLayer();
+};
+
+// ── TEMPO / BEAT CONTROLS ─────────────────────────
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+document.getElementById('bpmUp').onclick  = ()=>{ BPM=clamp(BPM+1,40,240); document.getElementById('bpmVal').textContent=BPM; buildBeatBar(); };
+document.getElementById('bpmDn').onclick  = ()=>{ BPM=clamp(BPM-1,40,240); document.getElementById('bpmVal').textContent=BPM; buildBeatBar(); };
+document.getElementById('barsUp').onclick = ()=>{ BARS=clamp(BARS+1,1,8);  document.getElementById('barsVal').textContent=BARS; buildBeatBar(); };
+document.getElementById('barsDn').onclick = ()=>{ BARS=clamp(BARS-1,1,8);  document.getElementById('barsVal').textContent=BARS; buildBeatBar(); };
+document.getElementById('beatsUp').onclick= ()=>{ BEATS=clamp(BEATS+1,2,8);document.getElementById('beatsVal').textContent=BEATS; buildBeatBar(); };
+document.getElementById('beatsDn').onclick= ()=>{ BEATS=clamp(BEATS-1,2,8);document.getElementById('beatsVal').textContent=BEATS; buildBeatBar(); };
+
+document.getElementById('btnUndo').onclick  = undo;
+document.getElementById('btnClear').onclick = clearAll;
+
+// ── INIT ──────────────────────────────────────────
+buildBeatBar();
+setState('idle');
 </script>
 
 </body>
